@@ -3265,8 +3265,8 @@ var require_utils = __commonJS({
       }
       return ind;
     }
-    function removeDotSegments(path5) {
-      let input = path5;
+    function removeDotSegments(path7) {
+      let input = path7;
       const output = [];
       let nextSlash = -1;
       let len = 0;
@@ -3675,8 +3675,8 @@ var require_schemes = __commonJS({
       }
       if (wsComponent.resourceName) {
         const queryIndex = wsComponent.resourceName.indexOf("?");
-        const path5 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
-        wsComponent.path = path5 && path5 !== "/" ? path5 : void 0;
+        const path7 = queryIndex === -1 ? wsComponent.resourceName : wsComponent.resourceName.slice(0, queryIndex);
+        wsComponent.path = path7 && path7 !== "/" ? path7 : void 0;
         wsComponent.query = queryIndex === -1 ? void 0 : wsComponent.resourceName.slice(queryIndex + 1);
         wsComponent.resourceName = void 0;
       }
@@ -7189,12 +7189,12 @@ var require_dist = __commonJS({
         throw new Error(`Unknown format "${name}"`);
       return f;
     };
-    function addFormats(ajv, list, fs4, exportName) {
+    function addFormats(ajv, list, fs6, exportName) {
       var _a;
       var _b;
       (_a = (_b = ajv.opts.code).formats) !== null && _a !== void 0 ? _a : _b.formats = (0, codegen_1._)`require("ajv-formats/dist/formats").${exportName}`;
       for (const f of list)
-        ajv.addFormat(f, fs4[f]);
+        ajv.addFormat(f, fs6[f]);
     }
     module.exports = exports = formatsPlugin;
     Object.defineProperty(exports, "__esModule", { value: true });
@@ -7401,10 +7401,10 @@ function assignProp(target, prop, value) {
     configurable: true
   });
 }
-function getElementAtPath(obj, path5) {
-  if (!path5)
+function getElementAtPath(obj, path7) {
+  if (!path7)
     return obj;
-  return path5.reduce((acc, key) => acc?.[key], obj);
+  return path7.reduce((acc, key) => acc?.[key], obj);
 }
 function promiseAllObject(promisesObj) {
   const keys = Object.keys(promisesObj);
@@ -7724,11 +7724,11 @@ function aborted(x, startIndex = 0) {
   }
   return false;
 }
-function prefixIssues(path5, issues) {
+function prefixIssues(path7, issues) {
   return issues.map((iss) => {
     var _a;
     (_a = iss).path ?? (_a.path = []);
-    iss.path.unshift(path5);
+    iss.path.unshift(path7);
     return iss;
   });
 }
@@ -10584,28 +10584,28 @@ var JSONSchemaGenerator = class {
           }
           case "file": {
             const json = _json;
-            const file = {
+            const file2 = {
               type: "string",
               format: "binary",
               contentEncoding: "binary"
             };
             const { minimum, maximum, mime } = schema._zod.bag;
             if (minimum !== void 0)
-              file.minLength = minimum;
+              file2.minLength = minimum;
             if (maximum !== void 0)
-              file.maxLength = maximum;
+              file2.maxLength = maximum;
             if (mime) {
               if (mime.length === 1) {
-                file.contentMediaType = mime[0];
-                Object.assign(json, file);
+                file2.contentMediaType = mime[0];
+                Object.assign(json, file2);
               } else {
                 json.anyOf = mime.map((m) => {
-                  const mFile = { ...file, contentMediaType: m };
+                  const mFile = { ...file2, contentMediaType: m };
                   return mFile;
                 });
               }
             } else {
-              Object.assign(json, file);
+              Object.assign(json, file2);
             }
             break;
           }
@@ -18088,8 +18088,8 @@ function getErrorMap() {
 
 // node_modules/zod/v3/helpers/parseUtil.js
 var makeIssue = (params) => {
-  const { data, path: path5, errorMaps, issueData } = params;
-  const fullPath = [...path5, ...issueData.path || []];
+  const { data, path: path7, errorMaps, issueData } = params;
+  const fullPath = [...path7, ...issueData.path || []];
   const fullIssue = {
     ...issueData,
     path: fullPath
@@ -18205,11 +18205,11 @@ var errorUtil;
 
 // node_modules/zod/v3/types.js
 var ParseInputLazyPath = class {
-  constructor(parent, value, path5, key) {
+  constructor(parent, value, path7, key) {
     this._cachedPath = [];
     this.parent = parent;
     this.data = value;
-    this._path = path5;
+    this._path = path7;
     this._key = key;
   }
   get path() {
@@ -21781,11 +21781,11 @@ function normalizeObjectSchema(schema) {
   }
   return void 0;
 }
-function getDotPath(path5) {
-  if (path5.length === 0) {
+function getDotPath(path7) {
+  if (path7.length === 0) {
     return "object root";
   }
-  return path5.reduce((acc, seg, index) => {
+  return path7.reduce((acc, seg, index) => {
     if (index === 0) {
       return String(seg);
     }
@@ -25772,7 +25772,11 @@ var EMPTY_COMPLETION_RESULT = {
 };
 
 // src/tools.ts
-import * as os4 from "os";
+import * as os5 from "os";
+import * as fs5 from "fs";
+import * as path6 from "path";
+import { spawn } from "child_process";
+import { fileURLToPath } from "url";
 
 // src/vault.ts
 import * as fs3 from "fs";
@@ -25804,7 +25808,7 @@ function health(vault = defaultVaultDir(), now = Date.now(), staleAfterMs = 30 *
   if (!hb) return { state: "amber", headline: "Archive has not run yet on this computer.", details: [`Vault: ${vault}`] };
   const age = now - Date.parse(hb.at);
   const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-  details.push(`${n(conversations, "conversation", "conversations")} and ${n(files, "AI-edited file", "AI-edited files")} protected (${n(recs.length, "saved version", "saved versions")}).`);
+  details.push(`${n(conversations, "conversation", "conversations")} and ${n(files, "AI-edited file", "AI-edited files")} captured (${n(recs.length, "saved version", "saved versions")}).`);
   details.push(`Last capture run: ${ago(age)} (${hb.at}).`);
   if (vm) details.push(`Last integrity check: ${vm.ok} of ${vm.records} verified, ${ago(now - Date.parse(vm.at))}.`);
   else details.push("Integrity has not been checked yet.");
@@ -25817,13 +25821,37 @@ function health(vault = defaultVaultDir(), now = Date.now(), staleAfterMs = 30 *
   if (age > staleAfterMs) {
     return { state: "amber", headline: `Not captured for ${ago(age).replace(" ago", "")}: the background capture has not run.`, details };
   }
-  return { state: "green", headline: `Protected \xB7 last captured ${ago(age)}`, details };
+  return { state: "green", headline: `Captured \xB7 last capture ${ago(age)}`, details };
 }
+
+// src/licence.ts
+import * as fs4 from "fs";
+import * as os4 from "os";
+import * as path5 from "path";
+var LICENCE_VERSION = "1.0";
+var LICENCE_URL = "https://github.com/rootz-global/rootz-archive/blob/main/LICENSE.md";
+var file = () => path5.join(process.env.ROOTZ_ARCHIVE_HOME || path5.join(os4.homedir(), ".rootz-archive"), "licence-accepted.json");
+function acceptance() {
+  try {
+    const a = JSON.parse(fs4.readFileSync(file(), "utf-8"));
+    return a.version === LICENCE_VERSION ? a : null;
+  } catch {
+    return null;
+  }
+}
+function accept(now = /* @__PURE__ */ new Date()) {
+  const a = { version: LICENCE_VERSION, acceptedAt: now.toISOString(), host: os4.hostname() };
+  fs4.mkdirSync(path5.dirname(file()), { recursive: true });
+  fs4.appendFileSync(path5.join(path5.dirname(file()), "licence-acceptances.jsonl"), JSON.stringify(a) + "\n");
+  fs4.writeFileSync(file(), JSON.stringify(a));
+  return a;
+}
+var NOT_ACCEPTED_MESSAGE = `Archive Free is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
 
 // src/tools.ts
 var SERVER_NAME = "archive-free";
-var SERVER_VERSION = "0.1.0";
-var SOURCE_LABEL = `Archive Free \xB7 this computer (${os4.hostname().replace(/\.local$/, "")})`;
+var SERVER_VERSION = "0.2.0";
+var SOURCE_LABEL = `Archive Free \xB7 this computer (${os5.hostname().replace(/\.local$/, "")})`;
 var text = (t, isError = false) => ({
   content: [{ type: "text", text: `${t}
 
@@ -26084,10 +26112,28 @@ ${body}`);
     if (ds.length === 0) return text("No decisions found.");
     return text(ds.map((d) => `- ${d.object} (${d.subject}; session ${d.sourceSessionId}${d.extractedAt ? `, ${date3(d.extractedAt)}` : ""})`).join("\n"));
   });
+  server.registerTool("accept_licence", {
+    description: TAG + "Record that the user accepts the Archive Free use licence. Call this ONLY when the user has typed /rootz-archive:accept or has explicitly said they accept the licence. Never call it on your own initiative.",
+    inputSchema: { version: external_exports.string().describe(`The licence version the user accepted; currently "${LICENCE_VERSION}"`) }
+  }, async ({ version: version2 }) => {
+    if (version2 !== LICENCE_VERSION) return text(`Not recorded: the current licence is version ${LICENCE_VERSION} (${LICENCE_URL}).`, true);
+    const a = accept();
+    let started = false;
+    try {
+      const cli = path6.join(path6.dirname(fileURLToPath(import.meta.url)), "archive.mjs");
+      if (fs5.existsSync(cli)) {
+        spawn(process.execPath, [cli, "capture", "--hook"], { detached: true, stdio: "ignore" }).unref();
+        started = true;
+      }
+    } catch {
+    }
+    return text(`Licence ${a.version} accepted on ${a.acceptedAt}. ` + (started ? 'Archive Free has started capturing now; ask "is Archive Free working?" in a minute.' : "Archive Free will start capturing at the next session start or end."));
+  });
   server.registerTool("archive_status", {
     description: TAG + "Is Archive working? Plain-language health of capture on this computer: green / amber / red with the reason. Call it when the user asks whether their conversations are being kept.",
     inputSchema: {}
   }, async () => {
+    if (!acceptance()) return text(`\u{1F7E0} ${NOT_ACCEPTED_MESSAGE}`);
     const h = health(process.env.ROOTZ_VAULT_DIR || defaultVaultDir());
     const icon = { green: "\u{1F7E2}", amber: "\u{1F7E0}", red: "\u{1F534}" }[h.state];
     return text(`${icon} ${h.headline}
@@ -26119,6 +26165,7 @@ Server: ${SERVER_NAME} ${SERVER_VERSION} \u2014 local only. No Desktop, relay, c
       forceReindex: external_exports.boolean().optional()
     }
   }, async ({ projectFilter, limit, forceReindex }) => {
+    if (!acceptance()) return text(NOT_ACCEPTED_MESSAGE, true);
     const r = await db.indexLocalSessions({ projectFilter, limit, forceReindex });
     archive.search.sync();
     return text(`Scanned ${r.filesScanned} files: ${r.filesIndexed} indexed, ${r.filesSkipped} unchanged, ${r.filesErrored} errors. ${r.totalMessagesIndexed} messages indexed.` + (r.errors.length ? `
