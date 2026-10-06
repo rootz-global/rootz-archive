@@ -1,0 +1,4 @@
+Built from rootz-global/rootz-v6 (private) archive-free@4b20707, apps/archive-local, plugin version 0.1.0.
+Built 2026-10-06T19:35:27Z on Darwin with node v26.8.2.
+dist/server.mjs  sha256 a76302fc18dcbf4c2dc938c42acb7f1d7f9f850b2bde9242cc45c9c4e82e00f5
+dist/archive.mjs sha256 ab14e7eafd79b495a11b6d418fd315acf0b03f5eeea188e58282d23022100e03

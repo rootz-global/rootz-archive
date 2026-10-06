@@ -1,0 +1,14 @@
+{
+  "description": "Archive: show status at session start; keep an exact copy before compaction and when a session ends.",
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" session-start", "timeout": 10 } ] }
+    ],
+    "PreCompact": [
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" snapshot --hook", "timeout": 60 } ] }
+    ],
+    "SessionEnd": [
+      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" capture --hook", "timeout": 120 } ] }
+    ]
+  }
+}
