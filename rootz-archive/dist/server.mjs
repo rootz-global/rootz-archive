@@ -25848,9 +25848,11 @@ function accept(now = /* @__PURE__ */ new Date()) {
 }
 var NOT_ACCEPTED_MESSAGE = `Archive Free is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
 
+// src/version.ts
+var SERVER_VERSION = "0.3.0";
+
 // src/tools.ts
 var SERVER_NAME = "archive-free";
-var SERVER_VERSION = "0.2.0";
 var SOURCE_LABEL = `Archive Free \xB7 this computer (${os5.hostname().replace(/\.local$/, "")})`;
 var text = (t, isError = false) => ({
   content: [{ type: "text", text: `${t}

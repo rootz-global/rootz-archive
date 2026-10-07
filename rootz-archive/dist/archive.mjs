@@ -9,8 +9,8 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 
 // src/archive-cli.ts
 import { spawn } from "child_process";
-import * as fs5 from "fs";
-import * as path6 from "path";
+import * as fs6 from "fs";
+import * as path7 from "path";
 
 // src/archive.ts
 import * as fs2 from "fs";
@@ -4300,22 +4300,59 @@ function acceptance() {
 }
 var NOT_ACCEPTED_MESSAGE = `Archive Free is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
 
-// src/vault.ts
-import * as crypto2 from "crypto";
+// src/launcher.ts
 import * as fs4 from "fs";
 import * as os4 from "os";
 import * as path5 from "path";
+import { pathToFileURL } from "url";
+var launcherPath = () => path5.join(process.env.ROOTZ_ARCHIVE_HOME || path5.join(os4.homedir(), ".rootz-archive"), "bin", "archive-free-mcp.mjs");
+function launcherSource(serverPath, version) {
+  return [
+    "#!/usr/bin/env node",
+    `// Archive Free stable launcher. Written by the rootz-archive plugin (version ${version}) at session start; do not edit.`,
+    "// Use it from other AI tools as an MCP stdio server:  node <this file>",
+    "import { pathToFileURL } from 'url';",
+    `await import(${JSON.stringify(pathToFileURL(serverPath).href)});`,
+    ""
+  ].join("\n");
+}
+function refreshLauncher(serverPath, version) {
+  if (!fs4.existsSync(serverPath)) return null;
+  const file2 = launcherPath();
+  const src = launcherSource(serverPath, version);
+  try {
+    if (fs4.readFileSync(file2, "utf-8") === src) return file2;
+  } catch {
+  }
+  fs4.mkdirSync(path5.dirname(file2), { recursive: true });
+  const tmp = `${file2}.tmp-${process.pid}`;
+  fs4.writeFileSync(tmp, src, { mode: 493 });
+  fs4.renameSync(tmp, file2);
+  return file2;
+}
+
+// src/archive-cli.ts
+import { fileURLToPath } from "url";
+
+// src/version.ts
+var SERVER_VERSION = "0.3.0";
+
+// src/vault.ts
+import * as crypto2 from "crypto";
+import * as fs5 from "fs";
+import * as os5 from "os";
+import * as path6 from "path";
 import * as zlib2 from "zlib";
 var MANIFEST_VERSION = 1;
 function defaultVaultDir() {
-  return process.env.ROOTZ_VAULT_DIR || path5.join(os4.homedir(), ".rootz-archive", "vault");
+  return process.env.ROOTZ_VAULT_DIR || path6.join(os5.homedir(), ".rootz-archive", "vault");
 }
-function claudeCodeSource(home = os4.homedir()) {
+function claudeCodeSource(home = os5.homedir()) {
   return {
     name: "claude-code",
-    root: path5.join(home, ".claude"),
+    root: path6.join(home, ".claude"),
     classify: (rel) => {
-      const r = rel.split(path5.sep).join("/");
+      const r = rel.split(path6.sep).join("/");
       if (r.startsWith("projects/")) {
         if (r.includes("/subagents/") && r.endsWith(".jsonl")) return "subagent-transcript";
         if (r.includes("/tool-results/")) return "tool-result";
@@ -4333,42 +4370,42 @@ var sha = (b) => crypto2.createHash("sha256").update(b).digest("hex");
 function* walk(dir) {
   let entries;
   try {
-    entries = fs4.readdirSync(dir, { withFileTypes: true });
+    entries = fs5.readdirSync(dir, { withFileTypes: true });
   } catch {
     return;
   }
   for (const e of entries) {
-    const p = path5.join(dir, e.name);
+    const p = path6.join(dir, e.name);
     if (e.isDirectory()) yield* walk(p);
     else if (e.isFile()) yield p;
   }
 }
 function blobPath(vault2, hash) {
-  return path5.join(vault2, "blobs", hash.slice(0, 2), hash);
+  return path6.join(vault2, "blobs", hash.slice(0, 2), hash);
 }
 function putBlob(vault2, bytes) {
   const h = sha(bytes);
   const p = blobPath(vault2, h);
-  if (!fs4.existsSync(p)) {
-    fs4.mkdirSync(path5.dirname(p), { recursive: true });
+  if (!fs5.existsSync(p)) {
+    fs5.mkdirSync(path6.dirname(p), { recursive: true });
     const tmp = `${p}.tmp-${process.pid}`;
-    fs4.writeFileSync(tmp, zlib2.gzipSync(bytes));
-    fs4.renameSync(tmp, p);
+    fs5.writeFileSync(tmp, zlib2.gzipSync(bytes));
+    fs5.renameSync(tmp, p);
   }
   return h;
 }
 function readBlob(vault2, hash) {
-  return zlib2.gunzipSync(fs4.readFileSync(blobPath(vault2, hash)));
+  return zlib2.gunzipSync(fs5.readFileSync(blobPath(vault2, hash)));
 }
 function readManifest(vault2) {
-  const p = path5.join(vault2, "manifest.jsonl");
-  if (!fs4.existsSync(p)) return [];
-  return fs4.readFileSync(p, "utf-8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const p = path6.join(vault2, "manifest.jsonl");
+  if (!fs5.existsSync(p)) return [];
+  return fs5.readFileSync(p, "utf-8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
 }
 function loadState(vault2) {
-  const p = path5.join(vault2, "state.json");
+  const p = path6.join(vault2, "state.json");
   try {
-    return JSON.parse(fs4.readFileSync(p, "utf-8"));
+    return JSON.parse(fs5.readFileSync(p, "utf-8"));
   } catch {
   }
   const s = {};
@@ -4376,36 +4413,36 @@ function loadState(vault2) {
   return s;
 }
 function snapshot(sources, vault2 = defaultVaultDir(), now = () => /* @__PURE__ */ new Date()) {
-  fs4.mkdirSync(vault2, { recursive: true });
-  const lockPath = path5.join(vault2, ".lock");
+  fs5.mkdirSync(vault2, { recursive: true });
+  const lockPath = path6.join(vault2, ".lock");
   let lock;
   try {
-    lock = fs4.openSync(lockPath, "wx");
+    lock = fs5.openSync(lockPath, "wx");
   } catch {
-    const age = Date.now() - fs4.statSync(lockPath).mtimeMs;
+    const age = Date.now() - fs5.statSync(lockPath).mtimeMs;
     if (age < 30 * 6e4) return { scanned: 0, captured: 0, appended: 0, whole: 0, unchanged: 0, bytesStored: 0, errors: ["another snapshot is running"] };
-    fs4.rmSync(lockPath);
-    lock = fs4.openSync(lockPath, "wx");
+    fs5.rmSync(lockPath);
+    lock = fs5.openSync(lockPath, "wx");
   }
   const res = { scanned: 0, captured: 0, appended: 0, whole: 0, unchanged: 0, bytesStored: 0, errors: [] };
   const state = loadState(vault2);
-  const manifest = fs4.openSync(path5.join(vault2, "manifest.jsonl"), "a");
+  const manifest = fs5.openSync(path6.join(vault2, "manifest.jsonl"), "a");
   try {
     for (const src of sources) {
       for (const abs of walk(src.root)) {
-        const rel = path5.relative(src.root, abs);
+        const rel = path6.relative(src.root, abs);
         const kind = src.classify(rel);
         if (!kind) continue;
         res.scanned++;
         try {
-          const st = fs4.statSync(abs);
+          const st = fs5.statSync(abs);
           const key = `${src.name}:${rel}`;
           const prev = state[key];
           if (prev && prev.size === st.size && prev.mtimeMs === Math.floor(st.mtimeMs)) {
             res.unchanged++;
             continue;
           }
-          const bytes = fs4.readFileSync(abs);
+          const bytes = fs5.readFileSync(abs);
           const full = sha(bytes);
           if (prev && prev.sha256 === full) {
             state[key] = { ...prev, mtimeMs: Math.floor(st.mtimeMs) };
@@ -4430,10 +4467,10 @@ function snapshot(sources, vault2 = defaultVaultDir(), now = () => /* @__PURE__ 
             v: MANIFEST_VERSION,
             scheme: "rootz-archive-vault/1",
             capturedAt: now().toISOString(),
-            host: os4.hostname(),
+            host: os5.hostname(),
             source: src.name,
             kind,
-            path: rel.split(path5.sep).join("/"),
+            path: rel.split(path6.sep).join("/"),
             size: bytes.length,
             mtimeMs: Math.floor(st.mtimeMs),
             sha256: full,
@@ -4441,7 +4478,7 @@ function snapshot(sources, vault2 = defaultVaultDir(), now = () => /* @__PURE__ 
             base,
             baseSize
           };
-          fs4.writeSync(manifest, JSON.stringify(rec) + "\n");
+          fs5.writeSync(manifest, JSON.stringify(rec) + "\n");
           state[key] = { sha256: full, size: bytes.length, mtimeMs: rec.mtimeMs };
           res.captured++;
         } catch (e) {
@@ -4450,11 +4487,11 @@ function snapshot(sources, vault2 = defaultVaultDir(), now = () => /* @__PURE__ 
       }
     }
   } finally {
-    fs4.closeSync(manifest);
-    fs4.writeFileSync(path5.join(vault2, "state.json.tmp"), JSON.stringify(state));
-    fs4.renameSync(path5.join(vault2, "state.json.tmp"), path5.join(vault2, "state.json"));
-    fs4.closeSync(lock);
-    fs4.rmSync(lockPath, { force: true });
+    fs5.closeSync(manifest);
+    fs5.writeFileSync(path6.join(vault2, "state.json.tmp"), JSON.stringify(state));
+    fs5.renameSync(path6.join(vault2, "state.json.tmp"), path6.join(vault2, "state.json"));
+    fs5.closeSync(lock);
+    fs5.rmSync(lockPath, { force: true });
   }
   return res;
 }
@@ -4491,15 +4528,15 @@ function verify(vault2 = defaultVaultDir()) {
 }
 function writeHeartbeat(vault2, r, at = /* @__PURE__ */ new Date()) {
   const hb = { at: at.toISOString(), captured: r.captured, errors: r.errors.slice(0, 5) };
-  fs4.writeFileSync(path5.join(vault2, "heartbeat.json"), JSON.stringify(hb));
+  fs5.writeFileSync(path6.join(vault2, "heartbeat.json"), JSON.stringify(hb));
 }
 function writeVerifyMark(vault2, r, at = /* @__PURE__ */ new Date()) {
   const m = { at: at.toISOString(), records: r.records, ok: r.ok, failures: r.failures.length };
-  fs4.writeFileSync(path5.join(vault2, "last-verify.json"), JSON.stringify(m));
+  fs5.writeFileSync(path6.join(vault2, "last-verify.json"), JSON.stringify(m));
 }
 var readJson = (p) => {
   try {
-    return JSON.parse(fs4.readFileSync(p, "utf-8"));
+    return JSON.parse(fs5.readFileSync(p, "utf-8"));
   } catch {
     return null;
   }
@@ -4507,9 +4544,9 @@ var readJson = (p) => {
 var ago = (ms) => ms < 9e4 ? "just now" : ms < 90 * 6e4 ? `${Math.round(ms / 6e4)} min ago` : ms < 48 * 36e5 ? `${Math.round(ms / 36e5)} hours ago` : `${Math.round(ms / 864e5)} days ago`;
 function health(vault2 = defaultVaultDir(), now = Date.now(), staleAfterMs = 30 * 6e4) {
   const details = [];
-  const hb = readJson(path5.join(vault2, "heartbeat.json"));
-  const vm = readJson(path5.join(vault2, "last-verify.json"));
-  const recs = fs4.existsSync(path5.join(vault2, "manifest.jsonl")) ? readManifest(vault2) : [];
+  const hb = readJson(path6.join(vault2, "heartbeat.json"));
+  const vm = readJson(path6.join(vault2, "last-verify.json"));
+  const recs = fs5.existsSync(path6.join(vault2, "manifest.jsonl")) ? readManifest(vault2) : [];
   const conversations = new Set(recs.filter((r) => r.kind === "transcript" || r.kind === "subagent-transcript").map((r) => r.path)).size;
   const files = new Set(recs.filter((r) => r.kind === "file-history").map((r) => r.path)).size;
   if (!hb) return { state: "amber", headline: "Archive has not run yet on this computer.", details: [`Vault: ${vault2}`] };
@@ -4550,7 +4587,7 @@ async function capture() {
     writeHeartbeat(vault, r);
     const vm = (() => {
       try {
-        return JSON.parse(fs5.readFileSync(path6.join(vault, "last-verify.json"), "utf-8"));
+        return JSON.parse(fs6.readFileSync(path7.join(vault, "last-verify.json"), "utf-8"));
       } catch {
         return null;
       }
@@ -4571,6 +4608,12 @@ async function main() {
     if (cmd === "session-start") console.log(JSON.stringify({ systemMessage: msg }));
     else process.stderr.write(msg + "\n");
     return;
+  }
+  if (cmd === "session-start") {
+    try {
+      refreshLauncher(path7.join(path7.dirname(fileURLToPath(import.meta.url)), "server.mjs"), SERVER_VERSION);
+    } catch {
+    }
   }
   if (!acceptance() && (cmd === "capture" || cmd === "snapshot" || cmd === "session-start")) {
     if (cmd === "session-start") console.log(JSON.stringify({ systemMessage: `\u{1F7E0} ${NOT_ACCEPTED_MESSAGE}` }));
