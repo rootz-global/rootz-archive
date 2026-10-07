@@ -26,7 +26,11 @@ import * as os from "os";
 
 // src/sqlite-shim.ts
 import { createRequire } from "module";
-var { DatabaseSync } = createRequire(import.meta.url)("node:sqlite");
+var _DatabaseSync;
+var DatabaseSync = function(f) {
+  _DatabaseSync ??= createRequire(import.meta.url)("node:sqlite").DatabaseSync;
+  return new _DatabaseSync(f);
+};
 function normalise(params) {
   return params.map((p) => p === void 0 ? null : p);
 }
@@ -4335,7 +4339,13 @@ function refreshLauncher(serverPath, version) {
 import { fileURLToPath } from "url";
 
 // src/version.ts
-var SERVER_VERSION = "0.3.0";
+var SERVER_VERSION = "0.3.1";
+var MIN_NODE = "22.13";
+function nodeOk(v = process.versions.node) {
+  const [maj, min] = v.split(".").map(Number);
+  return maj > 22 || maj === 22 && min >= 13;
+}
+var NODE_TOO_OLD_MESSAGE = (v = process.versions.node) => `Archive Free needs Node.js ${MIN_NODE} or newer (this computer has ${v}). Your conversations are NOT being archived. Install a current Node.js from https://nodejs.org, then start a new Claude Code session.`;
 
 // src/vault.ts
 import * as crypto2 from "crypto";
@@ -4573,10 +4583,6 @@ for (const k of ["log", "info", "warn", "debug"]) console[k] = (...a) => console
 var cmd = process.argv[2];
 var vault = defaultVaultDir();
 var isHook = process.argv.includes("--hook");
-function nodeOk() {
-  const [maj, min] = process.versions.node.split(".").map(Number);
-  return maj > 22 || maj === 22 && min >= 13;
-}
 async function capture() {
   const r = snapshot([claudeCodeSource()], vault);
   if (r.errors.includes("another snapshot is running")) return { skipped: true };
@@ -4604,7 +4610,7 @@ function backgroundCapture() {
 }
 async function main() {
   if (!nodeOk()) {
-    const msg = `\u{1F7E0} Archive needs Node.js 22.13 or newer (found ${process.versions.node}); your conversations are NOT being archived.`;
+    const msg = `\u{1F7E0} ${NODE_TOO_OLD_MESSAGE()}`;
     if (cmd === "session-start") console.log(JSON.stringify({ systemMessage: msg }));
     else process.stderr.write(msg + "\n");
     return;

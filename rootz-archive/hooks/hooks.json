@@ -2,13 +2,37 @@
   "description": "Archive: show status at session start; keep an exact copy before compaction and when a session ends.",
   "hooks": {
     "SessionStart": [
-      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" session-start", "timeout": 10 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" session-start || echo \"{\\\"systemMessage\\\":\\\"\ud83d\udfe0 Archive Free needs Node.js 22.13 or newer, and node was not found. Your conversations are NOT being archived. Install Node.js from https://nodejs.org, then start a new Claude Code session.\\\"}\"",
+            "timeout": 10
+          }
+        ]
+      }
     ],
     "PreCompact": [
-      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" snapshot --hook", "timeout": 60 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" snapshot --hook",
+            "timeout": 60
+          }
+        ]
+      }
     ],
     "SessionEnd": [
-      { "hooks": [ { "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" capture --hook", "timeout": 120 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" capture --hook",
+            "timeout": 120
+          }
+        ]
+      }
     ]
   }
 }

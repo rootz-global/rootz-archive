@@ -13353,7 +13353,11 @@ import * as os from "os";
 
 // src/sqlite-shim.ts
 import { createRequire } from "module";
-var { DatabaseSync } = createRequire(import.meta.url)("node:sqlite");
+var _DatabaseSync;
+var DatabaseSync = function(f) {
+  _DatabaseSync ??= createRequire(import.meta.url)("node:sqlite").DatabaseSync;
+  return new _DatabaseSync(f);
+};
 function normalise(params) {
   return params.map((p) => p === void 0 ? null : p);
 }
@@ -25849,7 +25853,13 @@ function accept(now = /* @__PURE__ */ new Date()) {
 var NOT_ACCEPTED_MESSAGE = `Archive Free is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
 
 // src/version.ts
-var SERVER_VERSION = "0.3.0";
+var SERVER_VERSION = "0.3.1";
+var MIN_NODE = "22.13";
+function nodeOk(v = process.versions.node) {
+  const [maj, min] = v.split(".").map(Number);
+  return maj > 22 || maj === 22 && min >= 13;
+}
+var NODE_TOO_OLD_MESSAGE = (v = process.versions.node) => `Archive Free needs Node.js ${MIN_NODE} or newer (this computer has ${v}). Your conversations are NOT being archived. Install a current Node.js from https://nodejs.org, then start a new Claude Code session.`;
 
 // src/tools.ts
 var SERVER_NAME = "archive-free";
@@ -26185,6 +26195,16 @@ for (const k of ["log", "info", "warn", "debug"]) {
   console[k] = (...a) => console.error(...a);
 }
 async function main() {
+  if (!nodeOk()) {
+    const server2 = new McpServer({ name: "archive-free", version: SERVER_VERSION });
+    server2.registerTool(
+      "archive_status",
+      { description: "[Archive Free \xB7 this computer] Is Archive working?", inputSchema: {} },
+      async () => ({ content: [{ type: "text", text: `\u{1F7E0} ${NODE_TOO_OLD_MESSAGE()}` }], isError: true })
+    );
+    await server2.connect(new StdioServerTransport());
+    return;
+  }
   const archive = await LocalArchive.open(defaultDataDir());
   const server = createServer(archive);
   await server.connect(new StdioServerTransport());
