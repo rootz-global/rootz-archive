@@ -20,7 +20,13 @@ capture anything until you do. After that, each session opens with a one-line st
 > 🟢 Archive Free (this computer): Captured · last capture 2 min ago · 327 conversations and 1,409 AI-edited files
 > captured
 
-**Needs:** Node.js 22.13 or newer (`node -v`). Nothing else to install.
+**Needs:** Node.js 22.13 or newer (`node -v`); install it from https://nodejs.org or with `brew install node`. Nothing
+else to install. Without it, Archive Free tells you at session start that it isn't archiving.
+
+**Windows:** if `claude plugin marketplace add` fails with `EBUSY: resource busy or locked`, install from a local clone
+instead. Run `git clone https://github.com/rootz-global/rootz-archive C:\rootz-plugins\rootz-archive`, then
+`claude plugin marketplace add C:\rootz-plugins\rootz-archive`, then `claude plugin install rootz-archive@rootz`.
+To update later, run `git pull` in that folder.
 
 ## Use it
 
