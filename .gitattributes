@@ -1,0 +1,2 @@
+# Byte-exact on every OS: provenance hashes must match on Windows too (core.autocrlf would rewrite LF).
+* -text

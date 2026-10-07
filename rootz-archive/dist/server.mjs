@@ -17339,6 +17339,7 @@ var SearchIndex = class {
     this.v6 = v6;
     this.db = new Database(path2.join(dataDir, "search.db"));
     this.db.pragma("journal_mode = WAL");
+    this.db.pragma("busy_timeout = 10000");
     this.db.exec(`
       CREATE VIRTUAL TABLE IF NOT EXISTS msg_fts USING fts5(
         content, session_id UNINDEXED, project UNINDEXED, role UNINDEXED, ts UNINDEXED,
@@ -17522,6 +17523,7 @@ var LocalArchive = class _LocalArchive {
   static async open(dataDir = defaultDataDir()) {
     const db = new ArchiveDatabase(dataDir);
     await db.initialize();
+    db.db.pragma("busy_timeout = 10000");
     return new _LocalArchive(db, dataDir);
   }
   close() {
@@ -25853,7 +25855,7 @@ function accept(now = /* @__PURE__ */ new Date()) {
 var NOT_ACCEPTED_MESSAGE = `Archive Free is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
 
 // src/version.ts
-var SERVER_VERSION = "0.3.1";
+var SERVER_VERSION = "0.3.2";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);

@@ -4012,6 +4012,7 @@ var SearchIndex = class {
     this.v6 = v6;
     this.db = new Database(path2.join(dataDir, "search.db"));
     this.db.pragma("journal_mode = WAL");
+    this.db.pragma("busy_timeout = 10000");
     this.db.exec(`
       CREATE VIRTUAL TABLE IF NOT EXISTS msg_fts USING fts5(
         content, session_id UNINDEXED, project UNINDEXED, role UNINDEXED, ts UNINDEXED,
@@ -4195,6 +4196,7 @@ var LocalArchive = class _LocalArchive {
   static async open(dataDir = defaultDataDir()) {
     const db = new ArchiveDatabase(dataDir);
     await db.initialize();
+    db.db.pragma("busy_timeout = 10000");
     return new _LocalArchive(db, dataDir);
   }
   close() {
@@ -4339,7 +4341,7 @@ function refreshLauncher(serverPath, version) {
 import { fileURLToPath } from "url";
 
 // src/version.ts
-var SERVER_VERSION = "0.3.1";
+var SERVER_VERSION = "0.3.2";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
