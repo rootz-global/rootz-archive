@@ -1,12 +1,14 @@
 {
   "name": "rootz",
   "description": "Rootz plugins for Claude Code",
-  "owner": { "name": "Rootz Corp" },
+  "owner": {
+    "name": "Rootz Corp"
+  },
   "plugins": [
     {
       "name": "rootz-archive",
       "source": "./rootz-archive",
-      "description": "Archive keeps an exact copy of every Claude Code conversation and every file Claude edits, on your own computer, searchable by your AI. Free. No account."
+      "description": "Rootz Archive keeps an exact copy of every Claude Code conversation and every file Claude edits, on your own computer, searchable by your AI. Free for individual users. No account."
     }
   ]
 }

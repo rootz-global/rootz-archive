@@ -1,16 +1,16 @@
-# Rootz Archive Free: Use Licence
+# Rootz Archive: Use Licence
 
-Version 1.0, effective 6 October 2026. © 2026 Rootz Corp. Contact and notices:
-https://github.com/rootz-global/rootz-archive/issues
+Version 1.1, effective 7 October 2026 (1.1 renames the product to Rootz Archive; the terms are unchanged).
+© 2026 Rootz Corp. Contact and notices: https://github.com/rootz-global/rootz-archive/issues
 
 **Please read this. By installing or using the Software you accept this licence. If you do not accept it, do not
 install or use the Software, or remove it with `claude plugin uninstall rootz-archive`. The Software does not
 archive anything until you accept, by typing `/rootz-archive:accept`.**
 
 **1. Licence.** Rootz Corp ("Rootz") grants you a free, non-exclusive, non-transferable licence to install and use
-Rootz Archive Free (the "Software") on computers you own or control, for your own use, including in your work. An
-organisation may allow its people to install the Software, each for their own use, and is responsible for their
-compliance. If you accept for an organisation, you confirm that you can bind it.
+Rootz Archive (the "Software") on computers you own or control, for your own use, including in your work. The
+Software is free for individual users. An organisation may allow its people to install the Software, each for their
+own use, and is responsible for their compliance. If you accept for an organisation, you confirm that you can bind it.
 
 **2. Your archive is yours.**
 - What the Software captures on your computer (your "Archive") belongs to you or to whoever already owns it. Rootz

@@ -25834,7 +25834,7 @@ function health(vault = defaultVaultDir(), now = Date.now(), staleAfterMs = 30 *
 import * as fs4 from "fs";
 import * as os4 from "os";
 import * as path5 from "path";
-var LICENCE_VERSION = "1.0";
+var LICENCE_VERSION = "1.1";
 var LICENCE_URL = "https://github.com/rootz-global/rootz-archive/blob/main/LICENSE.md";
 var file = () => path5.join(process.env.ROOTZ_ARCHIVE_HOME || path5.join(os4.homedir(), ".rootz-archive"), "licence-accepted.json");
 function acceptance() {
@@ -25852,27 +25852,27 @@ function accept(now = /* @__PURE__ */ new Date()) {
   fs4.writeFileSync(file(), JSON.stringify(a));
   return a;
 }
-var NOT_ACCEPTED_MESSAGE = `Archive Free is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
+var NOT_ACCEPTED_MESSAGE = `Rootz Archive is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
 
 // src/version.ts
-var SERVER_VERSION = "0.3.2";
+var SERVER_VERSION = "0.4.0";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
   return maj > 22 || maj === 22 && min >= 13;
 }
-var NODE_TOO_OLD_MESSAGE = (v = process.versions.node) => `Archive Free needs Node.js ${MIN_NODE} or newer (this computer has ${v}). Your conversations are NOT being archived. Install a current Node.js from https://nodejs.org, then start a new Claude Code session.`;
+var NODE_TOO_OLD_MESSAGE = (v = process.versions.node) => `Rootz Archive needs Node.js ${MIN_NODE} or newer (this computer has ${v}). Your conversations are NOT being archived. Install a current Node.js from https://nodejs.org, then start a new Claude Code session.`;
 
 // src/tools.ts
 var SERVER_NAME = "archive-free";
-var SOURCE_LABEL = `Archive Free \xB7 this computer (${os5.hostname().replace(/\.local$/, "")})`;
+var SOURCE_LABEL = `Rootz Archive \xB7 this computer (${os5.hostname().replace(/\.local$/, "")})`;
 var text = (t, isError = false) => ({
   content: [{ type: "text", text: `${t}
 
 \u2014 Source: ${SOURCE_LABEL}. Local archive only; not the Rootz Desktop/relay archive.` }],
   ...isError ? { isError } : {}
 });
-var TAG = "[Archive Free \xB7 this computer] ";
+var TAG = "[Rootz Archive \xB7 this computer] ";
 var date3 = (ms) => ms ? new Date(ms).toISOString().slice(0, 10) : "";
 var shortPath = (f) => {
   const parts = f.replace(/\\/g, "/").split("/").filter(Boolean);
@@ -26127,7 +26127,7 @@ ${body}`);
     return text(ds.map((d) => `- ${d.object} (${d.subject}; session ${d.sourceSessionId}${d.extractedAt ? `, ${date3(d.extractedAt)}` : ""})`).join("\n"));
   });
   server.registerTool("accept_licence", {
-    description: TAG + "Record that the user accepts the Archive Free use licence. Call this ONLY when the user has typed /rootz-archive:accept or has explicitly said they accept the licence. Never call it on your own initiative.",
+    description: TAG + "Record that the user accepts the Rootz Archive use licence. Call this ONLY when the user has typed /rootz-archive:accept or has explicitly said they accept the licence. Never call it on your own initiative.",
     inputSchema: { version: external_exports.string().describe(`The licence version the user accepted; currently "${LICENCE_VERSION}"`) }
   }, async ({ version: version2 }) => {
     if (version2 !== LICENCE_VERSION) return text(`Not recorded: the current licence is version ${LICENCE_VERSION} (${LICENCE_URL}).`, true);
@@ -26141,7 +26141,7 @@ ${body}`);
       }
     } catch {
     }
-    return text(`Licence ${a.version} accepted on ${a.acceptedAt}. ` + (started ? 'Archive Free has started capturing now; ask "is Archive Free working?" in a minute.' : "Archive Free will start capturing at the next session start or end."));
+    return text(`Licence ${a.version} accepted on ${a.acceptedAt}. ` + (started ? 'Rootz Archive has started capturing now; ask "is Rootz Archive working?" in a minute.' : "Rootz Archive will start capturing at the next session start or end."));
   });
   server.registerTool("archive_status", {
     description: TAG + "Is Archive working? Plain-language health of capture on this computer: green / amber / red with the reason. Call it when the user asks whether their conversations are being kept.",
@@ -26201,7 +26201,7 @@ async function main() {
     const server2 = new McpServer({ name: "archive-free", version: SERVER_VERSION });
     server2.registerTool(
       "archive_status",
-      { description: "[Archive Free \xB7 this computer] Is Archive working?", inputSchema: {} },
+      { description: "[Rootz Archive \xB7 this computer] Is Rootz Archive working?", inputSchema: {} },
       async () => ({ content: [{ type: "text", text: `\u{1F7E0} ${NODE_TOO_OLD_MESSAGE()}` }], isError: true })
     );
     await server2.connect(new StdioServerTransport());

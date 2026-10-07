@@ -4293,7 +4293,7 @@ function parseJsonl(jsonl) {
 import * as fs3 from "fs";
 import * as os3 from "os";
 import * as path4 from "path";
-var LICENCE_VERSION = "1.0";
+var LICENCE_VERSION = "1.1";
 var LICENCE_URL = "https://github.com/rootz-global/rootz-archive/blob/main/LICENSE.md";
 var file = () => path4.join(process.env.ROOTZ_ARCHIVE_HOME || path4.join(os3.homedir(), ".rootz-archive"), "licence-accepted.json");
 function acceptance() {
@@ -4304,7 +4304,7 @@ function acceptance() {
     return null;
   }
 }
-var NOT_ACCEPTED_MESSAGE = `Archive Free is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
+var NOT_ACCEPTED_MESSAGE = `Rootz Archive is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
 
 // src/launcher.ts
 import * as fs4 from "fs";
@@ -4315,7 +4315,7 @@ var launcherPath = () => path5.join(process.env.ROOTZ_ARCHIVE_HOME || path5.join
 function launcherSource(serverPath, version) {
   return [
     "#!/usr/bin/env node",
-    `// Archive Free stable launcher. Written by the rootz-archive plugin (version ${version}) at session start; do not edit.`,
+    `// Rootz Archive stable launcher. Written by the rootz-archive plugin (version ${version}) at session start; do not edit.`,
     "// Use it from other AI tools as an MCP stdio server:  node <this file>",
     "import { pathToFileURL } from 'url';",
     `await import(${JSON.stringify(pathToFileURL(serverPath).href)});`,
@@ -4341,13 +4341,13 @@ function refreshLauncher(serverPath, version) {
 import { fileURLToPath } from "url";
 
 // src/version.ts
-var SERVER_VERSION = "0.3.2";
+var SERVER_VERSION = "0.4.0";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
   return maj > 22 || maj === 22 && min >= 13;
 }
-var NODE_TOO_OLD_MESSAGE = (v = process.versions.node) => `Archive Free needs Node.js ${MIN_NODE} or newer (this computer has ${v}). Your conversations are NOT being archived. Install a current Node.js from https://nodejs.org, then start a new Claude Code session.`;
+var NODE_TOO_OLD_MESSAGE = (v = process.versions.node) => `Rootz Archive needs Node.js ${MIN_NODE} or newer (this computer has ${v}). Your conversations are NOT being archived. Install a current Node.js from https://nodejs.org, then start a new Claude Code session.`;
 
 // src/vault.ts
 import * as crypto2 from "crypto";
@@ -4643,7 +4643,7 @@ async function main() {
       const firstRun = h.headline.startsWith("Archive has not run yet");
       if (firstRun || h.state !== "green") backgroundCapture();
       const icon = { green: "\u{1F7E2}", amber: "\u{1F7E0}", red: "\u{1F534}" }[h.state];
-      const line = firstRun ? '\u{1F7E2} Archive Free is setting up: keeping an exact copy of your Claude Code conversations on this computer. Ask Claude "is Archive Free working?" anytime.' : `${icon} Archive Free (this computer): ${h.headline}${h.state === "green" ? ` \xB7 ${h.details[0] ?? ""}` : " \u2014 capture restarted."}`;
+      const line = firstRun ? '\u{1F7E2} Rootz Archive is setting up: keeping an exact copy of your Claude Code conversations on this computer. Ask Claude "is Rootz Archive working?" anytime.' : `${icon} Rootz Archive (this computer): ${h.headline}${h.state === "green" ? ` \xB7 ${h.details[0] ?? ""}` : " \u2014 capture restarted."}`;
       console.log(JSON.stringify({ systemMessage: line }));
       return;
     }

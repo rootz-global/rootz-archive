@@ -1,6 +1,6 @@
-# Archive Free: storage format
+# Rootz Archive: storage format
 
-Everything Archive Free keeps is ordinary files in open formats. You can read, copy, move or delete them without the
+Everything Rootz Archive keeps is ordinary files in open formats. You can read, copy, move or delete them without the
 Software.
 
 ## 1. Exact copies: `~/.rootz-archive/vault/`
@@ -42,4 +42,4 @@ The version you accepted, with the time and the computer name.
 3. Delete `~/.rootz-desktop/search.db`. **Delete `~/.rootz-desktop/archives.db` only if you do not use Rootz Desktop**,
    because Desktop uses the same file.
 
-Archive Free never deletes anything itself. Deleting is always your choice.
+Rootz Archive never deletes anything itself. Deleting is always your choice.
