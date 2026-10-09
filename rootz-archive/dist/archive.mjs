@@ -1,21 +1,26 @@
 #!/usr/bin/env node
 import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);
 import {
+  LICENCE_VERSION,
   LocalArchive,
   NODE_TOO_OLD_MESSAGE,
   NOT_ACCEPTED_MESSAGE,
   SERVER_VERSION,
+  accept,
   acceptance,
   claudeCodeSource,
   defaultDataDir,
   defaultVaultDir,
   health,
   nodeOk,
+  projectSlug,
+  readSettings,
   snapshot,
   verify,
   writeHeartbeat,
+  writeSettings,
   writeVerifyMark
-} from "./chunks/chunk-GOGMRKMN.mjs";
+} from "./chunks/chunk-TDRB5R5H.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import "./chunks/chunk-4TWFJUN4.mjs";
 
@@ -48,9 +53,9 @@ function refreshLauncher(serverPath, version) {
     if (fs.readFileSync(file, "utf-8") === src) return file;
   } catch {
   }
-  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.mkdirSync(path.dirname(file), { recursive: true, mode: 448 });
   const tmp = `${file}.tmp-${process.pid}`;
-  fs.writeFileSync(tmp, src, { mode: 493 });
+  fs.writeFileSync(tmp, src, { mode: 448 });
   fs.renameSync(tmp, file);
   return file;
 }
@@ -63,11 +68,13 @@ var cmd = process.argv[2];
 var vault = defaultVaultDir();
 var isHook = process.argv.includes("--hook");
 async function capture() {
-  const r = snapshot([claudeCodeSource()], vault);
+  const st = readSettings();
+  if (st.paused) return { paused: true };
+  const r = snapshot([claudeCodeSource(void 0, st.excludeProjects)], vault);
   if (r.errors.includes("another snapshot is running")) return { skipped: true };
   const archive = await LocalArchive.open(defaultDataDir());
   try {
-    const idx = await archive.db.indexLocalSessions({ limit: 1e5 });
+    const idx = await archive.indexProjects({ excludeProjects: st.excludeProjects });
     const s = archive.search.sync();
     writeHeartbeat(vault, r);
     const vm = (() => {
@@ -94,7 +101,44 @@ async function main() {
     else process.stderr.write(msg + "\n");
     return;
   }
-  if (cmd === "session-start") {
+  switch (cmd) {
+    case "accept": {
+      if (acceptance()) {
+        out(`Rootz Archive licence ${LICENCE_VERSION} is already accepted.`);
+        return;
+      }
+      const a = accept();
+      backgroundCapture();
+      out(`Rootz Archive licence ${a.version} accepted at ${a.acceptedAt}. Capture has started on this computer.`);
+      return;
+    }
+    case "pause": {
+      writeSettings({ ...readSettings(), paused: true });
+      out("Rootz Archive capture is PAUSED. Search still works. Resume with /rootz-archive:resume.");
+      return;
+    }
+    case "resume": {
+      writeSettings({ ...readSettings(), paused: false });
+      out("Rootz Archive capture RESUMED.");
+      return;
+    }
+    case "exclude":
+    case "include": {
+      const slug = projectSlug(process.argv[3] || process.cwd());
+      const st = readSettings();
+      const set = new Set(st.excludeProjects);
+      if (cmd === "exclude") set.add(slug);
+      else set.delete(slug);
+      writeSettings({ ...st, excludeProjects: [...set] });
+      out(cmd === "exclude" ? `Rootz Archive will no longer capture project ${slug}. Copies already made are kept; delete them yourself if you need them gone (see FORMAT.md).` : `Rootz Archive will capture project ${slug} again.`);
+      return;
+    }
+    case "settings": {
+      out(JSON.stringify(readSettings()));
+      return;
+    }
+  }
+  if (cmd === "session-start" && acceptance()) {
     try {
       refreshLauncher(path2.join(path2.dirname(fileURLToPath(import.meta.url)), "server.mjs"), SERVER_VERSION);
     } catch {
@@ -111,11 +155,17 @@ async function main() {
       return;
     }
     case "snapshot": {
-      const r = snapshot([claudeCodeSource()], vault);
+      const st = readSettings();
+      if (st.paused) return;
+      const r = snapshot([claudeCodeSource(void 0, st.excludeProjects)], vault);
       if (!r.errors.includes("another snapshot is running")) writeHeartbeat(vault, r);
       return;
     }
     case "session-start": {
+      if (readSettings().paused) {
+        out(JSON.stringify({ systemMessage: "\u23F8 Rootz Archive capture is paused (your choice). Resume with /rootz-archive:resume." }));
+        return;
+      }
       const h = health(vault);
       const firstRun = h.headline.startsWith("Archive has not run yet");
       if (firstRun || h.state !== "green") backgroundCapture();
@@ -164,7 +214,7 @@ async function main() {
       return;
     }
     default:
-      process.stderr.write("usage: archive.mjs capture | snapshot | session-start | health | verify | search <q> | transcript <id>\n");
+      process.stderr.write("usage: archive.mjs accept | pause | resume | exclude [dir] | include [dir] | settings | capture | snapshot | session-start | health | verify | search <q> | transcript <id>\n");
       process.exitCode = 2;
   }
 }

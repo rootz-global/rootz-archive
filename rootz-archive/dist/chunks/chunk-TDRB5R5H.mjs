@@ -193,26 +193,64 @@ function defaultDataDir() {
 function claudeProjectsDir() {
   return path2.join(process.env.USERPROFILE || process.env.HOME || os.homedir(), ".claude", "projects");
 }
+function restrictDbFiles(dataDir) {
+  try {
+    fs.chmodSync(dataDir, 448);
+  } catch {
+  }
+  for (const f of ["archives.db", "archives.db-wal", "archives.db-shm", "search.db", "search.db-wal", "search.db-shm"]) {
+    try {
+      fs.chmodSync(path2.join(dataDir, f), 384);
+    } catch {
+    }
+  }
+}
 var LocalArchive = class _LocalArchive {
-  db;
-  search;
   constructor(db, dataDir) {
+    this.dataDir = dataDir;
     this.db = db;
     this.search = new SearchIndex(this.sql, dataDir, db);
   }
+  db;
+  search;
   static async open(dataDir = defaultDataDir()) {
+    fs.mkdirSync(dataDir, { recursive: true, mode: 448 });
     const db = new ArchiveDatabase(dataDir);
     await db.initialize();
+    restrictDbFiles(dataDir);
     db.db.pragma("busy_timeout = 10000");
     return new _LocalArchive(db, dataDir);
   }
   close() {
+    restrictDbFiles(this.dataDir);
     this.search.close();
     this.db.close();
   }
   /** Raw better-sqlite3 handle, for the few reads ArchiveDatabase has no method for. */
   get sql() {
     return this.db.db;
+  }
+  /**
+   * Index Claude Code sessions into the archive, skipping projects the user excluded. Uses the exact-match projectFilter
+   * of V6's indexLocalSessions, one project folder at a time, so no excluded folder is ever read.
+   */
+  async indexProjects(opts = {}) {
+    const total = { filesScanned: 0, filesIndexed: 0, filesSkipped: 0, filesErrored: 0, totalMessagesIndexed: 0, errors: [] };
+    const root = claudeProjectsDir();
+    if (!fs.existsSync(root)) return total;
+    const excluded = new Set(opts.excludeProjects ?? []);
+    for (const dir of fs.readdirSync(root, { withFileTypes: true })) {
+      if (!dir.isDirectory() || excluded.has(dir.name)) continue;
+      if (opts.projectFilter && !dir.name.includes(opts.projectFilter)) continue;
+      const r = await this.db.indexLocalSessions({ projectFilter: dir.name, limit: opts.limit ?? 1e5, forceReindex: opts.forceReindex });
+      total.filesScanned += r.filesScanned;
+      total.filesIndexed += r.filesIndexed;
+      total.filesSkipped += r.filesSkipped;
+      total.filesErrored += r.filesErrored;
+      total.totalMessagesIndexed += r.totalMessagesIndexed;
+      total.errors.push(...r.errors);
+    }
+    return total;
   }
   listProjects() {
     return this.sql.prepare(`
@@ -306,13 +344,15 @@ var MANIFEST_VERSION = 1;
 function defaultVaultDir() {
   return process.env.ROOTZ_VAULT_DIR || path3.join(os2.homedir(), ".rootz-archive", "vault");
 }
-function claudeCodeSource(home = os2.homedir()) {
+function claudeCodeSource(home2 = os2.homedir(), excludeProjects = []) {
+  const excluded = new Set(excludeProjects);
   return {
     name: "claude-code",
-    root: path3.join(home, ".claude"),
+    root: path3.join(home2, ".claude"),
     classify: (rel) => {
       const r = rel.split(path3.sep).join("/");
       if (r.startsWith("projects/")) {
+        if (excluded.has(r.split("/")[1])) return null;
         if (r.includes("/subagents/") && r.endsWith(".jsonl")) return "subagent-transcript";
         if (r.includes("/tool-results/")) return "tool-result";
         if (r.includes("/memory/")) return "memory";
@@ -324,6 +364,28 @@ function claudeCodeSource(home = os2.homedir()) {
       return null;
     }
   };
+}
+function tightenPermissions(dir) {
+  const marker = path3.join(dir, ".perms-v1");
+  if (!fs2.existsSync(dir) || fs2.existsSync(marker)) return;
+  const walk2 = (d) => {
+    try {
+      fs2.chmodSync(d, 448);
+    } catch {
+    }
+    for (const e of fs2.readdirSync(d, { withFileTypes: true })) {
+      const p = path3.join(d, e.name);
+      if (e.isDirectory()) walk2(p);
+      else if (e.isFile()) {
+        try {
+          fs2.chmodSync(p, 384);
+        } catch {
+        }
+      }
+    }
+  };
+  walk2(dir);
+  fs2.writeFileSync(marker, (/* @__PURE__ */ new Date()).toISOString(), { mode: 384 });
 }
 var sha = (b) => crypto.createHash("sha256").update(b).digest("hex");
 function* walk(dir) {
@@ -346,9 +408,9 @@ function putBlob(vault, bytes) {
   const h = sha(bytes);
   const p = blobPath(vault, h);
   if (!fs2.existsSync(p)) {
-    fs2.mkdirSync(path3.dirname(p), { recursive: true });
+    fs2.mkdirSync(path3.dirname(p), { recursive: true, mode: 448 });
     const tmp = `${p}.tmp-${process.pid}`;
-    fs2.writeFileSync(tmp, zlib2.gzipSync(bytes));
+    fs2.writeFileSync(tmp, zlib2.gzipSync(bytes), { mode: 384 });
     fs2.renameSync(tmp, p);
   }
   return h;
@@ -372,7 +434,8 @@ function loadState(vault) {
   return s;
 }
 function snapshot(sources, vault = defaultVaultDir(), now = () => /* @__PURE__ */ new Date()) {
-  fs2.mkdirSync(vault, { recursive: true });
+  fs2.mkdirSync(vault, { recursive: true, mode: 448 });
+  tightenPermissions(vault);
   const lockPath = path3.join(vault, ".lock");
   let lock;
   try {
@@ -385,7 +448,7 @@ function snapshot(sources, vault = defaultVaultDir(), now = () => /* @__PURE__ *
   }
   const res = { scanned: 0, captured: 0, appended: 0, whole: 0, unchanged: 0, bytesStored: 0, errors: [] };
   const state = loadState(vault);
-  const manifest = fs2.openSync(path3.join(vault, "manifest.jsonl"), "a");
+  const manifest = fs2.openSync(path3.join(vault, "manifest.jsonl"), "a", 384);
   try {
     for (const src of sources) {
       for (const abs of walk(src.root)) {
@@ -447,7 +510,7 @@ function snapshot(sources, vault = defaultVaultDir(), now = () => /* @__PURE__ *
     }
   } finally {
     fs2.closeSync(manifest);
-    fs2.writeFileSync(path3.join(vault, "state.json.tmp"), JSON.stringify(state));
+    fs2.writeFileSync(path3.join(vault, "state.json.tmp"), JSON.stringify(state), { mode: 384 });
     fs2.renameSync(path3.join(vault, "state.json.tmp"), path3.join(vault, "state.json"));
     fs2.closeSync(lock);
     fs2.rmSync(lockPath, { force: true });
@@ -487,11 +550,11 @@ function verify(vault = defaultVaultDir()) {
 }
 function writeHeartbeat(vault, r, at = /* @__PURE__ */ new Date()) {
   const hb = { at: at.toISOString(), captured: r.captured, errors: r.errors.slice(0, 5) };
-  fs2.writeFileSync(path3.join(vault, "heartbeat.json"), JSON.stringify(hb));
+  fs2.writeFileSync(path3.join(vault, "heartbeat.json"), JSON.stringify(hb), { mode: 384 });
 }
 function writeVerifyMark(vault, r, at = /* @__PURE__ */ new Date()) {
   const m = { at: at.toISOString(), records: r.records, ok: r.ok, failures: r.failures.length };
-  fs2.writeFileSync(path3.join(vault, "last-verify.json"), JSON.stringify(m));
+  fs2.writeFileSync(path3.join(vault, "last-verify.json"), JSON.stringify(m), { mode: 384 });
 }
 var readJson = (p) => {
   try {
@@ -527,32 +590,52 @@ function health(vault = defaultVaultDir(), now = Date.now(), staleAfterMs = 30 *
   return { state: "green", headline: `Captured \xB7 last capture ${ago(age)}`, details };
 }
 
-// src/licence.ts
+// src/settings.ts
 import * as fs3 from "fs";
 import * as os3 from "os";
 import * as path4 from "path";
+var home = () => process.env.ROOTZ_ARCHIVE_HOME || path4.join(os3.homedir(), ".rootz-archive");
+var file = () => path4.join(home(), "settings.json");
+function readSettings() {
+  try {
+    const s = JSON.parse(fs3.readFileSync(file(), "utf-8"));
+    return { paused: s.paused === true, excludeProjects: Array.isArray(s.excludeProjects) ? s.excludeProjects.filter((x) => typeof x === "string") : [] };
+  } catch {
+    return { paused: false, excludeProjects: [] };
+  }
+}
+function writeSettings(s) {
+  fs3.mkdirSync(home(), { recursive: true, mode: 448 });
+  fs3.writeFileSync(file(), JSON.stringify(s, null, 2) + "\n", { mode: 384 });
+}
+var projectSlug = (p) => path4.resolve(p).replace(/[^A-Za-z0-9-]/g, "-");
+
+// src/licence.ts
+import * as fs4 from "fs";
+import * as os4 from "os";
+import * as path5 from "path";
 var LICENCE_VERSION = "1.1";
 var LICENCE_FILE = "LICENSE.md";
-var file = () => path4.join(process.env.ROOTZ_ARCHIVE_HOME || path4.join(os3.homedir(), ".rootz-archive"), "licence-accepted.json");
+var file2 = () => path5.join(process.env.ROOTZ_ARCHIVE_HOME || path5.join(os4.homedir(), ".rootz-archive"), "licence-accepted.json");
 function acceptance() {
   try {
-    const a = JSON.parse(fs3.readFileSync(file(), "utf-8"));
+    const a = JSON.parse(fs4.readFileSync(file2(), "utf-8"));
     return a.version === LICENCE_VERSION ? a : null;
   } catch {
     return null;
   }
 }
 function accept(now = /* @__PURE__ */ new Date()) {
-  const a = { version: LICENCE_VERSION, acceptedAt: now.toISOString(), host: os3.hostname() };
-  fs3.mkdirSync(path4.dirname(file()), { recursive: true });
-  fs3.appendFileSync(path4.join(path4.dirname(file()), "licence-acceptances.jsonl"), JSON.stringify(a) + "\n");
-  fs3.writeFileSync(file(), JSON.stringify(a));
+  const a = { version: LICENCE_VERSION, acceptedAt: now.toISOString(), host: os4.hostname() };
+  fs4.mkdirSync(path5.dirname(file2()), { recursive: true, mode: 448 });
+  fs4.appendFileSync(path5.join(path5.dirname(file2()), "licence-acceptances.jsonl"), JSON.stringify(a) + "\n", { mode: 384 });
+  fs4.writeFileSync(file2(), JSON.stringify(a), { mode: 384 });
   return a;
 }
 var NOT_ACCEPTED_MESSAGE = `Rootz Archive is installed but NOT archiving yet. To start, read the licence (${LICENCE_FILE} in the Rootz Archive plugin folder) and type /rootz-archive:accept to accept it.`;
 
 // src/version.ts
-var SERVER_VERSION = "0.4.6";
+var SERVER_VERSION = "0.5.0";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
@@ -570,8 +653,10 @@ export {
   writeHeartbeat,
   writeVerifyMark,
   health,
+  readSettings,
+  writeSettings,
+  projectSlug,
   LICENCE_VERSION,
-  LICENCE_FILE,
   acceptance,
   accept,
   NOT_ACCEPTED_MESSAGE,

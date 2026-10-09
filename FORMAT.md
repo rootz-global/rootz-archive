@@ -36,6 +36,10 @@ A manifest record (`scheme: "rootz-archive-vault/1"`):
 ## 3. Licence acceptance: `~/.rootz-archive/licence-accepted.json`, `licence-acceptances.jsonl`
 The version you accepted, with the time and the computer name.
 
+## 4. Your settings: `~/.rootz-archive/settings.json`
+`{"paused": false, "excludeProjects": ["-Users-you-code-private-repo"]}`. Change these with `/rootz-archive:pause`,
+`/rootz-archive:resume`, `/rootz-archive:exclude-project` and `/rootz-archive:include-project`.
+
 ## Deleting your archive
 1. `claude plugin uninstall rootz-archive`. Do this first, or the next session will capture again.
 2. Delete `~/.rootz-archive/`.

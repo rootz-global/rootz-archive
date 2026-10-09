@@ -1,7 +1,9 @@
 ---
 description: Accept the Rootz Archive use licence and start archiving
+allowed-tools: Bash(node:*)
 ---
-The user typed /rootz-archive:accept. That is their act of accepting the Rootz Archive use licence, version 1.1 (LICENSE.md in the plugin folder).
+The user typed /rootz-archive:accept. That is their act of accepting the Rootz Archive Use Licence (LICENSE.md in the plugin folder). The acceptance has already been recorded by this command:
 
-1. Call the `accept_licence` tool from the Rootz Archive MCP server (`archive-free`) with version "1.1".
-2. Tell the user in two plain sentences: the licence is accepted, and Rootz Archive is now capturing their Claude Code conversations on this computer. Remind them that they keep their own backups (licence section 9).
+!`node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" accept`
+
+Tell the user, in two plain sentences, what the line above says (accepted, or already accepted). Remind them that they keep their own backups (licence §9). If the line above shows an error instead, say so plainly and suggest checking `node --version` (22.13 or newer is needed).

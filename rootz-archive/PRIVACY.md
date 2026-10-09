@@ -8,7 +8,8 @@ Rootz Archive runs entirely on your computer. **It sends nothing to Rootz or any
 analytics, no accounts and no network connections.** Rootz receives none of your data.
 
 ## What it reads
-Only after you accept the licence (`/rootz-archive:accept`), and only these files that Claude Code itself writes on your
+Only after you accept the licence by typing `/rootz-archive:accept` (no AI can accept it for you), never in projects you
+excluded or while capture is paused, and only these files that Claude Code itself writes on your
 computer:
 - `~/.claude/projects/**`: your Claude Code conversation transcripts (including sub-agent conversations), the tool
   results Claude Code saves, and Claude's memory notes;
@@ -24,22 +25,30 @@ pasted into a conversation**. Rootz Archive copies them exactly as they are.
 - `~/.rootz-archive/vault/`: exact copies of the files above (gzip-compressed), each named by its SHA-256 fingerprint,
   plus a manifest recording, for each saved version: its path, size, fingerprint, capture time and **this computer's
   name**.
-- `~/.rootz-desktop/archives.db` and `search.db`: a searchable index of your conversations. (If you use Rootz Desktop, it
-  shares this file.)
+- `~/.rootz-desktop/archives.db` and `search.db` (on Windows `%APPDATA%\.rootz-desktop\`): a searchable index of your
+  conversations. (If you use Rootz Desktop, it shares this file.)
 - `~/.rootz-archive/licence-accepted.json` and `licence-acceptances.jsonl`: the licence version you accepted, when, and
   this computer's name.
-- `~/.rootz-archive/vault/heartbeat.json`, `last-verify.json`: when it last captured and checked your archive.
+- `~/.rootz-archive/vault/heartbeat.json`, `last-verify.json`, `state.json`: when it last captured and checked your
+  archive, and which version of each file it last saved.
+- `~/.rootz-archive/settings.json`: your pause setting and the projects you excluded.
 - `~/.rootz-archive/bin/archive-free-mcp.mjs`: a small launcher so other AI tools on your computer can search the archive.
+
+Folders are created owner-only (0700) and files owner-only (0600).
 
 ## What it sends
 **Nothing.** The plugin makes no network connections; a build check refuses any release containing network code. It
 starts no programs other than its own capture step (Node running the plugin's own `dist/archive.mjs`), and downloads
 nothing.
 
+**Background capture:** at session start, if the archive isn't up to date, the plugin starts one background capture of
+its own (the same local copy step), which may finish after the session ends.
+
 **One thing to know:** when **you or your AI** use Rootz Archive's search tools inside Claude Code (or another AI tool),
 the results are shown to that AI as part of your conversation. Your AI provider (for example Anthropic) then
-handles them under **your agreement with that provider**, as with anything else you show your AI. Rootz is not
-involved in that exchange.
+handles them under **your agreement with that provider**, as with anything else you show your AI.
+Every tool answer ends with a source line that includes **this computer's name** (for example "Source: Rootz Archive ·
+this computer (my-laptop)"), so that name is part of what your AI sees. Rootz is not involved in that exchange.
 
 ## What Rootz receives and retains
 **Nothing.** Rootz operates no server for this plugin and receives no copies, metadata, usage statistics or crash

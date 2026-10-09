@@ -1,19 +1,17 @@
 #!/usr/bin/env node
 import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);
 import {
-  LICENCE_FILE,
-  LICENCE_VERSION,
   LocalArchive,
   NODE_TOO_OLD_MESSAGE,
   NOT_ACCEPTED_MESSAGE,
   SERVER_VERSION,
-  accept,
   acceptance,
   defaultDataDir,
   defaultVaultDir,
   health,
-  nodeOk
-} from "./chunks/chunk-GOGMRKMN.mjs";
+  nodeOk,
+  readSettings
+} from "./chunks/chunk-TDRB5R5H.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
   McpServer,
@@ -31,10 +29,6 @@ import "./chunks/chunk-4TWFJUN4.mjs";
 
 // src/tools.ts
 import * as os from "os";
-import * as fs from "fs";
-import * as path from "path";
-import { spawn } from "child_process";
-import { fileURLToPath } from "url";
 var SERVER_NAME = "archive-free";
 var SOURCE_LABEL = `Rootz Archive \xB7 this computer (${os.hostname().replace(/\.local$/, "")})`;
 var text = (t, isError = false) => ({
@@ -49,16 +43,42 @@ var shortPath = (f) => {
   const parts = f.replace(/\\/g, "/").split("/").filter(Boolean);
   return parts.length > 2 ? parts.slice(-2).join("/") : parts.join("/");
 };
-function createServer(archive) {
+var WRITE_TOOLS = /* @__PURE__ */ new Set(["add_summary", "index_local_sessions"]);
+var UNGATED = /* @__PURE__ */ new Set(["archive_status"]);
+function createServer(source) {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
-  const db = archive.db;
+  let archive;
+  let db;
+  let opening;
+  const open = async () => {
+    opening ??= typeof source === "function" ? source() : Promise.resolve(source);
+    archive = await opening;
+    db = archive.db;
+  };
   const sessionNumberMap = /* @__PURE__ */ new Map();
+  const reg = (name, config, cb) => {
+    const write = WRITE_TOOLS.has(name);
+    config.annotations = {
+      title: name.split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "),
+      readOnlyHint: !write,
+      destructiveHint: false,
+      idempotentHint: !write,
+      openWorldHint: false
+    };
+    server.registerTool(name, config, async (...args) => {
+      if (!UNGATED.has(name)) {
+        if (!acceptance()) return text(NOT_ACCEPTED_MESSAGE, true);
+        await open();
+      }
+      return cb(...args);
+    });
+  };
   const resolveSessionId = (a) => a.sessionId || (a.sessionNumber !== void 0 ? sessionNumberMap.get(a.sessionNumber) ?? null : null);
   const sessionRef = {
     sessionId: external_exports.string().optional().describe("Session ID"),
     sessionNumber: external_exports.number().optional().describe("Session number from list_past_sessions output")
   };
-  server.registerTool("search_conversations", {
+  reg("search_conversations", {
     description: TAG + 'Ranked full-text search across your archived AI conversations and their summaries. Local and offline. Words are stemmed and ANDed; use "quotes" for an exact phrase.',
     inputSchema: {
       query: external_exports.string().describe('Words or "a phrase" to search for'),
@@ -96,8 +116,8 @@ ${body2}`);
 
 ${body}`);
   });
-  server.registerTool("next_unsummarised", {
-    description: TAG + "Sessions that have no summary yet, longest first. Use it to help your user: read a session with get_full_transcript, write a summary of what was decided and produced, then call add_summary. Summaries improve search.",
+  reg("next_unsummarised", {
+    description: TAG + "Sessions that have no summary yet, longest first. Use it only when the user asks you to summarise past sessions; summarising is the user's choice, never on your own initiative.",
     inputSchema: {
       limit: external_exports.number().optional().describe("How many (default 5)"),
       model: external_exports.string().optional().describe("Only sessions not yet summarised by THIS model")
@@ -109,8 +129,8 @@ ${body}`);
 
 ` + rows.map((r, i) => `${i + 1}. ${r.sessionId} \u2014 ${r.projectSlug || "no project"}, ${r.messages} messages${r.lastMessageAt ? `, last ${date(r.lastMessageAt)}` : ""}`).join("\n"));
   });
-  server.registerTool("add_summary", {
-    description: TAG + "Store a summary YOU wrote of one session, labelled with your model name. It is indexed for search and never replaces the original transcript. Write it for a future reader: what was decided, what was produced, what was left open.",
+  reg("add_summary", {
+    description: TAG + "Store a summary you wrote of one session, at the user's request, labelled with your model name. It is indexed for search and never replaces the original transcript. Write it for a future reader: what was decided, what was produced, what was left open.",
     inputSchema: {
       ...sessionRef,
       summary: external_exports.string().describe("The summary text (at least 40 characters)"),
@@ -122,12 +142,12 @@ ${body}`);
     if (!sessionId) return text("Error: provide sessionId or sessionNumber.", true);
     try {
       const rec = await archive.search.addSummary({ sessionId, model: args.model, text: args.summary, sourceMessages: args.sourceMessages ?? 0 });
-      return text(`Summary stored for ${rec.sessionId} (model ${rec.model}, ${rec.text.length} chars) in the V6 archive's summaries (visible to get_summary and the Archive tab) and indexed for search.`);
+      return text(`Summary stored for ${rec.sessionId} (model ${rec.model}, ${rec.text.length} chars) and indexed for search; the original transcript is unchanged.`);
     } catch (e) {
       return text(`Not stored: ${e.message}`, true);
     }
   });
-  server.registerTool("list_past_sessions", {
+  reg("list_past_sessions", {
     description: TAG + "List past sessions, most recent first. Filter by topic text, project, or sessions with errors.",
     inputSchema: {
       query: external_exports.string().optional(),
@@ -166,7 +186,7 @@ ${files}${topics}${s.lastMessageAt ? `   Date: ${date(s.lastMessageAt)}` : ""}`;
 
 ${body}`);
   });
-  server.registerTool("get_session_context", {
+  reg("get_session_context", {
     description: TAG + "Summary of one session: files, tools, topics, git state, opening messages.",
     inputSchema: sessionRef
   }, async (args) => {
@@ -203,13 +223,13 @@ Recent Messages:
 ${recent}`
     );
   });
-  server.registerTool("get_full_transcript", {
+  reg("get_full_transcript", {
     description: TAG + "Transcript of one session, paginated. States where the text came from: the archived copy, the live source file, or parsed messages only.",
     inputSchema: {
       ...sessionRef,
       format: external_exports.enum(["parsed", "jsonl"]).optional(),
-      offset: external_exports.number().optional().describe("Start message index (default 0)"),
-      limit: external_exports.number().optional().describe("Max messages (default 50)")
+      offset: external_exports.number().optional().describe("Start message (or JSONL line) index (default 0)"),
+      limit: external_exports.number().optional().describe("Max messages (or JSONL lines) (default 50)")
     }
   }, async (args) => {
     const sessionId = resolveSessionId(args);
@@ -225,12 +245,18 @@ ${recent}`
       if (!t.jsonl) return text(`Session: ${sessionId}
 ${sourceNote}
 Raw JSONL is not available for this session.`, true);
-      return text(`Session: ${sessionId}
+      const lines = t.jsonl.split("\n").filter(Boolean);
+      const lo = args.offset ?? 0, n = args.limit ?? 50;
+      const more2 = lo + n < lines.length ? `
+
+More available: use offset=${lo + n}` : "";
+      return text(`Session: ${sessionId} (${lines.length} JSONL lines)
 ${sourceNote}
+Showing lines ${lo}-${Math.min(lo + n, lines.length) - 1}:
 
 --- Raw JSONL ---
 
-${t.jsonl}`);
+${lines.slice(lo, lo + n).join("\n")}${more2}`);
     }
     const offset = args.offset ?? 0;
     const limit = args.limit ?? 50;
@@ -249,7 +275,7 @@ Showing messages ${offset}-${offset + page.length - 1}:
 
 ${body}${more}`);
   });
-  server.registerTool("get_project_context", {
+  reg("get_project_context", {
     description: TAG + "Recent sessions for a project, to pick up where you left off.",
     inputSchema: { projectSlug: external_exports.string(), limit: external_exports.number().optional() }
   }, async ({ projectSlug, limit }) => {
@@ -267,7 +293,7 @@ Recent Sessions (${ctx.length}):
 
 ${body}`);
   });
-  server.registerTool("list_projects", {
+  reg("list_projects", {
     description: TAG + "Projects in the local archive, with session counts.",
     inputSchema: {}
   }, async () => {
@@ -277,7 +303,7 @@ ${body}`);
 
 ` + rows.map((r) => `- ${r.projectSlug} \u2014 ${r.sessionCount} sessions${r.lastActive ? `, last ${date(r.lastActive)}` : ""}`).join("\n"));
   });
-  server.registerTool("recall_facts", {
+  reg("recall_facts", {
     description: TAG + "Facts extracted from past sessions (uses, depends_on, implements, decision, pattern, bug, fix, preference). Regex-extracted: treat as leads, not records.",
     inputSchema: {
       subject: external_exports.string().optional(),
@@ -289,7 +315,7 @@ ${body}`);
     if (facts.length === 0) return text("No facts found.");
     return text(facts.map((f) => `- [${f.factType}] ${f.subject} ${f.predicate} ${f.object} (conf ${f.confidence.toFixed(2)}, session ${f.sourceSessionId})`).join("\n"));
   });
-  server.registerTool("get_decisions", {
+  reg("get_decisions", {
     description: TAG + "Decisions extracted from past sessions. Regex-extracted: verify against the transcript before relying on one.",
     inputSchema: { subject: external_exports.string().optional(), limit: external_exports.number().optional() }
   }, async ({ subject, limit }) => {
@@ -297,35 +323,19 @@ ${body}`);
     if (ds.length === 0) return text("No decisions found.");
     return text(ds.map((d) => `- ${d.object} (${d.subject}; session ${d.sourceSessionId}${d.extractedAt ? `, ${date(d.extractedAt)}` : ""})`).join("\n"));
   });
-  server.registerTool("accept_licence", {
-    description: TAG + "Record that the user accepts the Rootz Archive use licence. Call this ONLY when the user has typed /rootz-archive:accept or has explicitly said they accept the licence. Never call it on your own initiative.",
-    inputSchema: { version: external_exports.string().describe(`The licence version the user accepted; currently "${LICENCE_VERSION}"`) }
-  }, async ({ version }) => {
-    if (version !== LICENCE_VERSION) return text(`Not recorded: the current licence is version ${LICENCE_VERSION} (${LICENCE_FILE} in the Rootz Archive plugin folder).`, true);
-    const a = accept();
-    let started = false;
-    try {
-      const cli = path.join(path.dirname(fileURLToPath(import.meta.url)), "archive.mjs");
-      if (fs.existsSync(cli)) {
-        spawn(process.execPath, [cli, "capture", "--hook"], { detached: true, stdio: "ignore" }).unref();
-        started = true;
-      }
-    } catch {
-    }
-    return text(`Licence ${a.version} accepted on ${a.acceptedAt}. ` + (started ? 'Rootz Archive has started capturing now; ask "is Rootz Archive working?" in a minute.' : "Rootz Archive will start capturing at the next session start or end."));
-  });
-  server.registerTool("archive_status", {
+  reg("archive_status", {
     description: TAG + "Is Archive working? Plain-language health of capture on this computer: green / amber / red with the reason. Call it when the user asks whether their conversations are being kept.",
     inputSchema: {}
   }, async () => {
     if (!acceptance()) return text(`\u{1F7E0} ${NOT_ACCEPTED_MESSAGE}`);
+    if (readSettings().paused) return text("\u23F8 Rootz Archive capture is paused (your choice). Search still works. Type /rootz-archive:resume to resume.");
     const h = health(process.env.ROOTZ_VAULT_DIR || defaultVaultDir());
     const icon = { green: "\u{1F7E2}", amber: "\u{1F7E0}", red: "\u{1F534}" }[h.state];
     return text(`${icon} ${h.headline}
 
 ${h.details.map((d) => `- ${d}`).join("\n")}`, h.state === "red");
   });
-  server.registerTool("get_archive_stats", {
+  reg("get_archive_stats", {
     description: TAG + "Size of the local archive and what it can and cannot do.",
     inputSchema: {}
   }, async () => {
@@ -342,7 +352,7 @@ Summaries: ${x.summaries} (${x.summarisedSessions} sessions)
 
 Server: ${SERVER_NAME} ${SERVER_VERSION} \u2014 local only. No Desktop, relay, chain or account is used.`);
   });
-  server.registerTool("index_local_sessions", {
+  reg("index_local_sessions", {
     description: TAG + "Capture: index Claude Code sessions from ~/.claude/projects into the local archive. Skips files unchanged since last run.",
     inputSchema: {
       projectFilter: external_exports.string().optional().describe("Only project folders containing this text"),
@@ -350,8 +360,9 @@ Server: ${SERVER_NAME} ${SERVER_VERSION} \u2014 local only. No Desktop, relay, c
       forceReindex: external_exports.boolean().optional()
     }
   }, async ({ projectFilter, limit, forceReindex }) => {
-    if (!acceptance()) return text(NOT_ACCEPTED_MESSAGE, true);
-    const r = await db.indexLocalSessions({ projectFilter, limit, forceReindex });
+    const st = readSettings();
+    if (st.paused) return text("Rootz Archive capture is paused. Type /rootz-archive:resume to resume.", true);
+    const r = await archive.indexProjects({ projectFilter, limit, forceReindex, excludeProjects: st.excludeProjects });
     archive.search.sync();
     return text(`Scanned ${r.filesScanned} files: ${r.filesIndexed} indexed, ${r.filesSkipped} unchanged, ${r.filesErrored} errors. ${r.totalMessagesIndexed} messages indexed.` + (r.errors.length ? `
 
