@@ -1,6 +1,6 @@
 ---
 description: Resume Rootz Archive capture
-allowed-tools: Bash(node:*)
+allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" resume)
 ---
 !`node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" resume`
 

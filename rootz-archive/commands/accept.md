@@ -1,6 +1,6 @@
 ---
 description: Accept the Rootz Archive use licence and start archiving
-allowed-tools: Bash(node:*)
+allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" accept)
 ---
 The user typed /rootz-archive:accept. That is their act of accepting the Rootz Archive Use Licence (LICENSE.md in the plugin folder). The acceptance has already been recorded by this command:
 

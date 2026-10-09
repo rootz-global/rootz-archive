@@ -1,6 +1,6 @@
 ---
 description: Stop Rootz Archive capturing this project (the current folder)
-allowed-tools: Bash(node:*)
+allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" exclude)
 ---
 !`node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" exclude`
 

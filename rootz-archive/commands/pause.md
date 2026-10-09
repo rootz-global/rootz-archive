@@ -1,6 +1,6 @@
 ---
 description: Pause Rootz Archive capture (search keeps working)
-allowed-tools: Bash(node:*)
+allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" pause)
 ---
 !`node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" pause`
 

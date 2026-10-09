@@ -1,6 +1,6 @@
 ---
 description: Let Rootz Archive capture this project (the current folder) again
-allowed-tools: Bash(node:*)
+allowed-tools: Bash(node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" include)
 ---
 !`node "${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs" include`
 

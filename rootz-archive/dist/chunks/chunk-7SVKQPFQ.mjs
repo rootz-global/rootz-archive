@@ -366,26 +366,28 @@ function claudeCodeSource(home2 = os2.homedir(), excludeProjects = []) {
   };
 }
 function tightenPermissions(dir) {
-  const marker = path3.join(dir, ".perms-v1");
-  if (!fs2.existsSync(dir) || fs2.existsSync(marker)) return;
-  const walk2 = (d) => {
+  if (process.platform === "win32" || !fs2.existsSync(dir)) return;
+  const fix = (p, want) => {
     try {
-      fs2.chmodSync(d, 448);
+      if ((fs2.lstatSync(p).mode & 511) !== want) fs2.chmodSync(p, want);
     } catch {
     }
-    for (const e of fs2.readdirSync(d, { withFileTypes: true })) {
+  };
+  const walk2 = (d) => {
+    fix(d, 448);
+    let entries;
+    try {
+      entries = fs2.readdirSync(d, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
       const p = path3.join(d, e.name);
       if (e.isDirectory()) walk2(p);
-      else if (e.isFile()) {
-        try {
-          fs2.chmodSync(p, 384);
-        } catch {
-        }
-      }
+      else if (e.isFile()) fix(p, 384);
     }
   };
   walk2(dir);
-  fs2.writeFileSync(marker, (/* @__PURE__ */ new Date()).toISOString(), { mode: 384 });
 }
 var sha = (b) => crypto.createHash("sha256").update(b).digest("hex");
 function* walk(dir) {
@@ -439,12 +441,12 @@ function snapshot(sources, vault = defaultVaultDir(), now = () => /* @__PURE__ *
   const lockPath = path3.join(vault, ".lock");
   let lock;
   try {
-    lock = fs2.openSync(lockPath, "wx");
+    lock = fs2.openSync(lockPath, "wx", 384);
   } catch {
     const age = Date.now() - fs2.statSync(lockPath).mtimeMs;
     if (age < 30 * 6e4) return { scanned: 0, captured: 0, appended: 0, whole: 0, unchanged: 0, bytesStored: 0, errors: ["another snapshot is running"] };
     fs2.rmSync(lockPath);
-    lock = fs2.openSync(lockPath, "wx");
+    lock = fs2.openSync(lockPath, "wx", 384);
   }
   const res = { scanned: 0, captured: 0, appended: 0, whole: 0, unchanged: 0, bytesStored: 0, errors: [] };
   const state = loadState(vault);
@@ -635,7 +637,7 @@ function accept(now = /* @__PURE__ */ new Date()) {
 var NOT_ACCEPTED_MESSAGE = `Rootz Archive is installed but NOT archiving yet. To start, read the licence (${LICENCE_FILE} in the Rootz Archive plugin folder) and type /rootz-archive:accept to accept it.`;
 
 // src/version.ts
-var SERVER_VERSION = "0.5.1";
+var SERVER_VERSION = "0.5.2";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
