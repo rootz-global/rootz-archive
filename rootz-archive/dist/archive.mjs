@@ -4341,7 +4341,7 @@ function refreshLauncher(serverPath, version) {
 import { fileURLToPath } from "url";
 
 // src/version.ts
-var SERVER_VERSION = "0.4.0";
+var SERVER_VERSION = "0.4.1";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
