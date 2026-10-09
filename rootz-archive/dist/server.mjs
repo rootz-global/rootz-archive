@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);
 import {
-  LICENCE_URL,
+  LICENCE_FILE,
   LICENCE_VERSION,
   LocalArchive,
   NODE_TOO_OLD_MESSAGE,
@@ -13,7 +13,7 @@ import {
   defaultVaultDir,
   health,
   nodeOk
-} from "./chunks/chunk-POGMOI72.mjs";
+} from "./chunks/chunk-QAEV5O3G.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
   McpServer,
@@ -301,7 +301,7 @@ ${body}`);
     description: TAG + "Record that the user accepts the Rootz Archive use licence. Call this ONLY when the user has typed /rootz-archive:accept or has explicitly said they accept the licence. Never call it on your own initiative.",
     inputSchema: { version: external_exports.string().describe(`The licence version the user accepted; currently "${LICENCE_VERSION}"`) }
   }, async ({ version }) => {
-    if (version !== LICENCE_VERSION) return text(`Not recorded: the current licence is version ${LICENCE_VERSION} (${LICENCE_URL}).`, true);
+    if (version !== LICENCE_VERSION) return text(`Not recorded: the current licence is version ${LICENCE_VERSION} (${LICENCE_FILE} in the Rootz Archive plugin folder).`, true);
     const a = accept();
     let started = false;
     try {

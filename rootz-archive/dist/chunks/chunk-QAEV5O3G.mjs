@@ -532,7 +532,7 @@ import * as fs3 from "fs";
 import * as os3 from "os";
 import * as path4 from "path";
 var LICENCE_VERSION = "1.1";
-var LICENCE_URL = "https://github.com/rootz-global/rootz-archive/blob/main/LICENSE.md";
+var LICENCE_FILE = "LICENSE.md";
 var file = () => path4.join(process.env.ROOTZ_ARCHIVE_HOME || path4.join(os3.homedir(), ".rootz-archive"), "licence-accepted.json");
 function acceptance() {
   try {
@@ -549,16 +549,16 @@ function accept(now = /* @__PURE__ */ new Date()) {
   fs3.writeFileSync(file(), JSON.stringify(a));
   return a;
 }
-var NOT_ACCEPTED_MESSAGE = `Rootz Archive is installed but NOT archiving yet. To start, read the licence (${LICENCE_URL}) and type /rootz-archive:accept to accept it.`;
+var NOT_ACCEPTED_MESSAGE = `Rootz Archive is installed but NOT archiving yet. To start, read the licence (${LICENCE_FILE} in the Rootz Archive plugin folder) and type /rootz-archive:accept to accept it.`;
 
 // src/version.ts
-var SERVER_VERSION = "0.4.3";
+var SERVER_VERSION = "0.4.4";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
   return maj > 22 || maj === 22 && min >= 13;
 }
-var NODE_TOO_OLD_MESSAGE = (v = process.versions.node) => `Rootz Archive needs Node.js ${MIN_NODE} or newer (this computer has ${v}). Your conversations are NOT being archived. Install a current Node.js from https://nodejs.org, then start a new Claude Code session.`;
+var NODE_TOO_OLD_MESSAGE = (v = process.versions.node) => `Rootz Archive needs Node.js ${MIN_NODE} or newer (this computer has ${v}). Your conversations are NOT being archived. Install Node.js 22.13 or newer (see the plugin README), then start a new Claude Code session.`;
 
 export {
   defaultDataDir,
@@ -571,7 +571,7 @@ export {
   writeVerifyMark,
   health,
   LICENCE_VERSION,
-  LICENCE_URL,
+  LICENCE_FILE,
   acceptance,
   accept,
   NOT_ACCEPTED_MESSAGE,

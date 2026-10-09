@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" session-start 2>/dev/null || echo \"{\\\"systemMessage\\\":\\\"\ud83d\udfe0 Rootz Archive needs Node.js 22.13 or newer, and node was not found. Your conversations are NOT being archived. Install Node.js from https://nodejs.org, then start a new Claude Code session.\\\"}\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/archive.mjs\" session-start 2>/dev/null || echo \"{\\\"systemMessage\\\":\\\"\ud83d\udfe0 Rootz Archive needs Node.js 22.13 or newer, and node was not found. Your conversations are NOT being archived. Install Node.js 22.13 or newer (see the plugin README), then start a new Claude Code session.\\\"}\"",
             "timeout": 10
           }
         ]
