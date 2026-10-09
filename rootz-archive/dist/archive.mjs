@@ -16,11 +16,12 @@ import {
   projectSlug,
   readSettings,
   snapshot,
+  tightenPermissions,
   verify,
   writeHeartbeat,
   writeSettings,
   writeVerifyMark
-} from "./chunks/chunk-TDRB5R5H.mjs";
+} from "./chunks/chunk-XF4YACXE.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import "./chunks/chunk-4TWFJUN4.mjs";
 
@@ -62,12 +63,20 @@ function refreshLauncher(serverPath, version) {
 
 // src/archive-cli.ts
 import { fileURLToPath } from "url";
+import * as os2 from "os";
 for (const k of ["log", "info", "warn", "debug"]) console[k] = (...a) => console.error(...a);
 var out = (line) => process.stdout.write(line + "\n");
 var cmd = process.argv[2];
 var vault = defaultVaultDir();
 var isHook = process.argv.includes("--hook");
+function tightenArchiveHome() {
+  try {
+    tightenPermissions(process.env.ROOTZ_ARCHIVE_HOME || path2.join(os2.homedir(), ".rootz-archive"));
+  } catch {
+  }
+}
 async function capture() {
+  tightenArchiveHome();
   const st = readSettings();
   if (st.paused) return { paused: true };
   const r = snapshot([claudeCodeSource(void 0, st.excludeProjects)], vault);
