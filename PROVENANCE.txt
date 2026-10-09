@@ -1,4 +1,22 @@
-Built from rootz-global/rootz-v6 (private) archive-free@bfb4e57, apps/archive-local, plugin version 0.4.2.
-Built 2026-10-09T09:17:14Z on Darwin with node v26.8.2.
-dist/server.mjs  sha256 86eabaf1a88324cfd43e482c6a9b4201c1f91dac6eb487d21043ee18afe7feed
-dist/archive.mjs sha256 9480a6f55ff5b8f2c5ad1b81032a0d47edead791a04eea74664fc59fe7728f9d
+Built from rootz-global/rootz-v6 (private) archive-free@2c1a4e3, apps/archive-local, plugin version 0.4.3.
+Built 2026-10-09T13:27:33Z on Darwin with node v26.8.2.
+ae3d070ae58ff86ef1b6da4de20b3830148b2f47984e8877bd11403dc7dc2897  dist/archive.mjs
+e0cb812e61b6b20f12210d0a78c6fdd4ddfe812474b74640fba7c30e41d4bcab  dist/chunks/chunk-4F5DKZYP.mjs
+3c5e2c5cec98116e05b43dde4a37a97e707e527e125227967afd1f0a09c3832b  dist/chunks/chunk-4TWFJUN4.mjs
+93d2ebc7fc8bdd964b947f9b49aca442b3cd63b64108cca52aa1eaf3a33de4dd  dist/chunks/chunk-E6VJ2V3Q.mjs
+b0b794a744bcffe938e2bb20ea7786e66905b4c6ec293bcf8add4b10d2c6b858  dist/chunks/chunk-JUYGSETY.mjs
+8fa47d3b227299d2a4d2163192a1482ef502f32963fe32f8b58b1d65e6e1d38a  dist/chunks/chunk-L4DQGOBV.mjs
+f90ad37d372e34453376eb2ee99210b88a1d6ad6a8606aae7b619284fc7e53f9  dist/chunks/chunk-LS7ELLM2.mjs
+41d31181286ea987fb2604d573253c02d3486129cfc1598af2a1975efbba88a5  dist/chunks/chunk-PMDUTFDN.mjs
+ac28c4e924b482cbc86af7612578ef40879f5b5284473883c1c44438071fc2ee  dist/chunks/chunk-POGMOI72.mjs
+3dce11fca9e334acdf118d3ae6dd77d712ad7f47b9eee87f4e24191f203ec19c  dist/chunks/chunk-QMADD65T.mjs
+244b618749a25251670c17ce99943297c4e7020f34f9d7de0812dc7f0ebde092  dist/chunks/chunk-SYIV54HI.mjs
+6b177817818bd6115cae654bec4ce1609504544cb26865cbbc03b4b00631432c  dist/lib-ajv.mjs
+766a63854f977677c75f37dda1aa79e600e0af8f4e7e794415fc73287b6a0c1b  dist/lib-db.mjs
+69be2caf23d25a028ce193ddb481e3a1eeb5f32c5c3cbe323cd2a71671bed45a  dist/lib-fasturi.mjs
+7c51f86b4d8f85843e398c523b20c949086edd4a3b6e7d4d57628e825613553d  dist/lib-mcp.mjs
+19bc6383c8233a0cae9400e07122469acf2ee0e33ad410c796f84f0d413db275  dist/lib-zod3.mjs
+ec06d27d89da6b60fbfd03630f505517ae16a769af2e397873ef2d2edd3a9b23  dist/lib-zod4.mjs
+89eeecce97f4da95f993a95506ab6182612e1d39a4ba3b04ee9b083d8e362319  dist/lib-zod4core.mjs
+509a72fb5cf1e8d26a8fac72e3786e9c3e8ccd4a47f1140f0d3490370da53f67  dist/lib-zod4locales.mjs
+092c6f43286adb7d4e2993f00f3e3169e0a32a3d7f125188bf012cd6ee74f29e  dist/server.mjs
