@@ -552,7 +552,7 @@ function accept(now = /* @__PURE__ */ new Date()) {
 var NOT_ACCEPTED_MESSAGE = `Rootz Archive is installed but NOT archiving yet. To start, read the licence (${LICENCE_FILE} in the Rootz Archive plugin folder) and type /rootz-archive:accept to accept it.`;
 
 // src/version.ts
-var SERVER_VERSION = "0.4.4";
+var SERVER_VERSION = "0.4.5";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);

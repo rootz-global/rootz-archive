@@ -1,8 +1,10 @@
 {
   "mcpServers": {
     "archive-free": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/server.mjs"]
+      "command": "/Users/stevensprague/.memflow/bin/memflow-mcp",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/dist/server.mjs"
+      ]
     }
   }
 }

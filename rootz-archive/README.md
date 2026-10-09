@@ -31,5 +31,5 @@ tool, the result goes to your AI provider as part of your conversation, as with 
 - `~/.rootz-archive/licence-accepted.json`: the licence version you accepted, and when.
 - `~/.rootz-archive/bin/archive-free-mcp.mjs`: a launcher for using the archive from other AI tools.
 
-Formats and deletion: [FORMAT.md](FORMAT.md). Open-source components: [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+Formats and deletion: [FORMAT.md](FORMAT.md). Privacy: [PRIVACY.md](PRIVACY.md). Open-source components: [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
 Not affiliated with Anthropic.

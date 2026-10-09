@@ -13,7 +13,7 @@ import {
   defaultVaultDir,
   health,
   nodeOk
-} from "./chunks/chunk-QAEV5O3G.mjs";
+} from "./chunks/chunk-FP2FTYMG.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
   McpServer,

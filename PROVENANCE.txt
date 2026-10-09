@@ -1,16 +1,16 @@
-# Built from rootz-global/rootz-v6 (private) archive-free@96d1127, apps/archive-local, plugin version 0.4.4.
-# Built 2026-10-09T14:48:15Z on Darwin with node v26.8.2.
+# Built from rootz-global/rootz-v6 (private) archive-free@447bf34, apps/archive-local, plugin version 0.4.5.
+# Built 2026-10-09T14:53:31Z on Darwin with node v26.8.2.
 # Verify every published file, from the REPO ROOT:  shasum -a 256 -c PROVENANCE.txt   (or: sha256sum -c PROVENANCE.txt)
 # (the 3 '#' header lines are reported as improperly formatted; all file lines must say OK)
-5fa8542311eae2178989eb13f158f3ecd248ebcb742408200a3ef3f4c4b24b8d  rootz-archive/dist/archive.mjs
+57bf90db9aaf04c8cf0ce9b66d64dff752141fc46c6cb2b2cb11667a81ba9b59  rootz-archive/dist/archive.mjs
 e0cb812e61b6b20f12210d0a78c6fdd4ddfe812474b74640fba7c30e41d4bcab  rootz-archive/dist/chunks/chunk-4F5DKZYP.mjs
 3c5e2c5cec98116e05b43dde4a37a97e707e527e125227967afd1f0a09c3832b  rootz-archive/dist/chunks/chunk-4TWFJUN4.mjs
 93d2ebc7fc8bdd964b947f9b49aca442b3cd63b64108cca52aa1eaf3a33de4dd  rootz-archive/dist/chunks/chunk-E6VJ2V3Q.mjs
+c6fb4fa9d3b0fc60ad35608bdb19e47f0862e0799201cff905ed7999daa16b01  rootz-archive/dist/chunks/chunk-FP2FTYMG.mjs
 b0b794a744bcffe938e2bb20ea7786e66905b4c6ec293bcf8add4b10d2c6b858  rootz-archive/dist/chunks/chunk-JUYGSETY.mjs
 8fa47d3b227299d2a4d2163192a1482ef502f32963fe32f8b58b1d65e6e1d38a  rootz-archive/dist/chunks/chunk-L4DQGOBV.mjs
 f90ad37d372e34453376eb2ee99210b88a1d6ad6a8606aae7b619284fc7e53f9  rootz-archive/dist/chunks/chunk-LS7ELLM2.mjs
 41d31181286ea987fb2604d573253c02d3486129cfc1598af2a1975efbba88a5  rootz-archive/dist/chunks/chunk-PMDUTFDN.mjs
-f0da581485031d279dd6505ee688ac7fcc47ca418bdded7d3d28ce4283e1a86d  rootz-archive/dist/chunks/chunk-QAEV5O3G.mjs
 3dce11fca9e334acdf118d3ae6dd77d712ad7f47b9eee87f4e24191f203ec19c  rootz-archive/dist/chunks/chunk-QMADD65T.mjs
 244b618749a25251670c17ce99943297c4e7020f34f9d7de0812dc7f0ebde092  rootz-archive/dist/chunks/chunk-SYIV54HI.mjs
 6b177817818bd6115cae654bec4ce1609504544cb26865cbbc03b4b00631432c  rootz-archive/dist/lib-ajv.mjs
@@ -21,4 +21,4 @@ f0da581485031d279dd6505ee688ac7fcc47ca418bdded7d3d28ce4283e1a86d  rootz-archive/
 ec06d27d89da6b60fbfd03630f505517ae16a769af2e397873ef2d2edd3a9b23  rootz-archive/dist/lib-zod4.mjs
 89eeecce97f4da95f993a95506ab6182612e1d39a4ba3b04ee9b083d8e362319  rootz-archive/dist/lib-zod4core.mjs
 509a72fb5cf1e8d26a8fac72e3786e9c3e8ccd4a47f1140f0d3490370da53f67  rootz-archive/dist/lib-zod4locales.mjs
-6c0659679f86560fc5f6adaee0e2778ae92133cabe90c5ef1c6e79e6b1ab76ba  rootz-archive/dist/server.mjs
+e2f94b7950677eb411e7c54fae2245ff29f255a10db8545241a6b23a5e463f83  rootz-archive/dist/server.mjs
