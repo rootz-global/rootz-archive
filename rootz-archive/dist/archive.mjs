@@ -3781,13 +3781,13 @@ Files touched: ${allFiles.join(", ")}` : "";
       ORDER BY created_at ASC
     `).all(...params);
     const totalUnread = rows.length;
-    const out = [];
+    const out2 = [];
     let usedChars = 0;
     let truncatedMessages = 0;
     let lastDeliveredAt = startCursor;
     for (const row of rows) {
       const msg = this.mapChatRow(row);
-      if (out.length > 0 && usedChars + msg.content.length > budgetChars) break;
+      if (out2.length > 0 && usedChars + msg.content.length > budgetChars) break;
       if (msg.content.length > maxPerMessage) {
         const full = msg.content.length;
         msg.content = msg.content.slice(0, maxPerMessage) + `
@@ -3795,18 +3795,18 @@ Files touched: ${allFiles.join(", ")}` : "";
 \u2026[truncated \u2014 ${full} chars total; full message id=${msg.id}]`;
         truncatedMessages++;
       }
-      out.push(msg);
+      out2.push(msg);
       usedChars += msg.content.length;
       lastDeliveredAt = row.created_at;
     }
     let cursor = startCursor;
-    if (!options.peek && out.length > 0) {
+    if (!options.peek && out2.length > 0) {
       cursor = this.setChatCursor(sessionId, reader, lastDeliveredAt);
     }
     return {
-      messages: out,
-      delivered: out.length,
-      remaining: totalUnread - out.length,
+      messages: out2,
+      delivered: out2.length,
+      remaining: totalUnread - out2.length,
       truncatedMessages,
       cursor,
       reader
@@ -4114,7 +4114,7 @@ var SearchIndex = class {
     const rows = this.archiveDb.prepare(
       "SELECT id, summary, session_ids, created_at FROM summary_hierarchy WHERE level = 'session'" + (sessionId ? " AND session_ids LIKE ?" : "") + " ORDER BY created_at DESC"
     ).all(...sessionId ? [`%${sessionId}%`] : []);
-    const out = [];
+    const out2 = [];
     for (const r of rows) {
       let ids = [];
       try {
@@ -4124,10 +4124,10 @@ var SearchIndex = class {
       const m = /^sum_session_.+?__(.+)__\d+$/.exec(r.id);
       for (const sid of ids) {
         if (sessionId && sid !== sessionId) continue;
-        out.push({ sessionId: sid, model: m ? decodeURIComponent(m[1]) : "unknown", createdAt: r.created_at, text: r.summary, sourceMessages: 0 });
+        out2.push({ sessionId: sid, model: m ? decodeURIComponent(m[1]) : "unknown", createdAt: r.created_at, text: r.summary, sourceMessages: 0 });
       }
     }
-    return out;
+    return out2;
   }
   async addSummary(s) {
     const body = s.text.trim();
@@ -4270,7 +4270,7 @@ function contentToText(content) {
   return "";
 }
 function parseJsonl(jsonl) {
-  const out = [];
+  const out2 = [];
   for (const line of jsonl.split("\n")) {
     if (!line.trim()) continue;
     let entry;
@@ -4284,9 +4284,9 @@ function parseJsonl(jsonl) {
     const text = contentToText(msg.content);
     if (!text) continue;
     const ts = typeof entry.timestamp === "string" ? Date.parse(entry.timestamp) : void 0;
-    out.push({ role: msg.role === "user" ? "human" : msg.role || String(entry.type), content: text, timestamp: ts });
+    out2.push({ role: msg.role === "user" ? "human" : msg.role || String(entry.type), content: text, timestamp: ts });
   }
-  return out;
+  return out2;
 }
 
 // src/licence.ts
@@ -4341,7 +4341,7 @@ function refreshLauncher(serverPath, version) {
 import { fileURLToPath } from "url";
 
 // src/version.ts
-var SERVER_VERSION = "0.4.1";
+var SERVER_VERSION = "0.4.2";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
@@ -4525,18 +4525,18 @@ function verify(vault2 = defaultVaultDir()) {
   const recs = readManifest(vault2);
   const bySha = /* @__PURE__ */ new Map();
   for (const r of recs) bySha.set(r.sha256, r);
-  const out = { records: recs.length, ok: 0, failures: [] };
+  const out2 = { records: recs.length, ok: 0, failures: [] };
   for (const r of recs) {
     try {
       const bytes = reconstruct(vault2, r, bySha);
       if (bytes.length !== r.size) throw new Error(`size ${bytes.length} != recorded ${r.size}`);
       if (sha(bytes) !== r.sha256) throw new Error("sha256 mismatch");
-      out.ok++;
+      out2.ok++;
     } catch (e) {
-      out.failures.push({ path: r.path, sha256: r.sha256, error: e.message });
+      out2.failures.push({ path: r.path, sha256: r.sha256, error: e.message });
     }
   }
-  return out;
+  return out2;
 }
 function writeHeartbeat(vault2, r, at = /* @__PURE__ */ new Date()) {
   const hb = { at: at.toISOString(), captured: r.captured, errors: r.errors.slice(0, 5) };
@@ -4582,6 +4582,7 @@ function health(vault2 = defaultVaultDir(), now = Date.now(), staleAfterMs = 30 
 
 // src/archive-cli.ts
 for (const k of ["log", "info", "warn", "debug"]) console[k] = (...a) => console.error(...a);
+var out = (line) => process.stdout.write(line + "\n");
 var cmd = process.argv[2];
 var vault = defaultVaultDir();
 var isHook = process.argv.includes("--hook");
@@ -4613,7 +4614,7 @@ function backgroundCapture() {
 async function main() {
   if (!nodeOk()) {
     const msg = `\u{1F7E0} ${NODE_TOO_OLD_MESSAGE()}`;
-    if (cmd === "session-start") console.log(JSON.stringify({ systemMessage: msg }));
+    if (cmd === "session-start") out(JSON.stringify({ systemMessage: msg }));
     else process.stderr.write(msg + "\n");
     return;
   }
@@ -4624,7 +4625,7 @@ async function main() {
     }
   }
   if (!acceptance() && (cmd === "capture" || cmd === "snapshot" || cmd === "session-start")) {
-    if (cmd === "session-start") console.log(JSON.stringify({ systemMessage: `\u{1F7E0} ${NOT_ACCEPTED_MESSAGE}` }));
+    if (cmd === "session-start") out(JSON.stringify({ systemMessage: `\u{1F7E0} ${NOT_ACCEPTED_MESSAGE}` }));
     return;
   }
   switch (cmd) {
@@ -4644,25 +4645,50 @@ async function main() {
       if (firstRun || h.state !== "green") backgroundCapture();
       const icon = { green: "\u{1F7E2}", amber: "\u{1F7E0}", red: "\u{1F534}" }[h.state];
       const line = firstRun ? '\u{1F7E2} Rootz Archive is setting up: keeping an exact copy of your Claude Code conversations on this computer. Ask Claude "is Rootz Archive working?" anytime.' : `${icon} Rootz Archive (this computer): ${h.headline}${h.state === "green" ? ` \xB7 ${h.details[0] ?? ""}` : " \u2014 capture restarted."}`;
-      console.log(JSON.stringify({ systemMessage: line }));
+      out(JSON.stringify({ systemMessage: line }));
       return;
     }
     case "health": {
       const h = health(vault);
-      console.log(`[${h.state.toUpperCase()}] ${h.headline}
+      out(`[${h.state.toUpperCase()}] ${h.headline}
 ` + h.details.map((d) => `  ${d}`).join("\n"));
       process.exitCode = h.state === "green" ? 0 : h.state === "amber" ? 3 : 1;
+      return;
+    }
+    case "search": {
+      const li = process.argv.indexOf("--limit");
+      const limit = li > -1 ? Number(process.argv[li + 1]) || 20 : 20;
+      const q = process.argv.slice(3).filter((a, i, all) => a !== "--limit" && all[i - 1] !== "--limit").join(" ");
+      const archive = await LocalArchive.open(defaultDataDir());
+      try {
+        archive.search.sync();
+        const hits = q.trim() ? archive.search.search(q, { limit }) : [];
+        process.stdout.write(JSON.stringify({ query: q, hits }) + "\n");
+      } finally {
+        archive.close();
+      }
+      return;
+    }
+    case "transcript": {
+      const sid = process.argv[3] ?? "";
+      const archive = await LocalArchive.open(defaultDataDir());
+      try {
+        const t = await archive.getTranscript(sid);
+        process.stdout.write(JSON.stringify(t ? { sessionId: sid, source: t.source, messages: t.messages } : { sessionId: sid, error: "not found" }) + "\n");
+      } finally {
+        archive.close();
+      }
       return;
     }
     case "verify": {
       const r = verify(vault);
       writeVerifyMark(vault, r);
-      console.log(r.failures.length ? `VERIFY FAILED: ${r.failures.length} of ${r.records}` : `ok: ${r.ok}/${r.records} verified`);
+      out(r.failures.length ? `VERIFY FAILED: ${r.failures.length} of ${r.records}` : `ok: ${r.ok}/${r.records} verified`);
       process.exitCode = r.failures.length ? 1 : 0;
       return;
     }
     default:
-      process.stderr.write("usage: archive.mjs capture | snapshot | session-start | health | verify\n");
+      process.stderr.write("usage: archive.mjs capture | snapshot | session-start | health | verify | search <q> | transcript <id>\n");
       process.exitCode = 2;
   }
 }
