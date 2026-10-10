@@ -12,7 +12,7 @@ import {
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-D6CPGTHD.mjs";
+} from "./chunks/chunk-K6WABS5I.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
   McpServer,
@@ -340,21 +340,22 @@ ${body}`);
 ${h.details.map((d) => `- ${d}`).join("\n")}`, h.state === "red");
   });
   reg("get_archive_stats", {
-    description: TAG + "Size of the local archive and what it can and cannot do.",
+    description: TAG + "What the archive holds, in plain words: what is kept as exact copies on this computer, and what is searchable now.",
     inputSchema: {}
   }, async () => {
     const s = await db.getSearchStats();
     archive.search.sync();
     const x = archive.search.stats();
-    return text(`Sessions: ${s.totalSessions}
-Messages: ${s.totalMessages}
-Files: ${s.uniqueFiles}
-Tools: ${s.uniqueTools}
-Sessions with errors: ${s.sessionsWithErrors}
-Ranked index: ${x.indexedMessages} messages
-Summaries: ${x.summaries} (${x.summarisedSessions} sessions)
+    const h = health(process.env.ROOTZ_VAULT_DIR || defaultVaultDir());
+    const kept = h.details.find((d) => d.includes("kept as exact copies"));
+    const fmt = (k) => k.toLocaleString("en-US");
+    return text(
+      `Kept on this computer: ${kept ?? "nothing captured yet."}
+Searchable now: ${fmt(s.totalSessions)} conversations (${fmt(s.totalMessages)} messages), mentioning ${fmt(s.uniqueFiles)} different files. Sub-agent conversations are kept as exact copies but are not searchable yet.
+Summaries your AI has written: ${fmt(x.summaries)}${x.summaries ? ` (covering ${fmt(x.summarisedSessions)} conversations)` : ' (ask me to "summarise my longest unsummarised sessions")'}.
 
-Server: ${SERVER_NAME} ${SERVER_VERSION} \u2014 local only. No Desktop, relay, chain or account is used.`);
+${SERVER_NAME} ${SERVER_VERSION}: local only. No account, no network.`
+    );
   });
   reg("index_local_sessions", {
     description: TAG + "Capture: index Claude Code sessions from ~/.claude/projects into the local archive. Skips files unchanged since last run.",

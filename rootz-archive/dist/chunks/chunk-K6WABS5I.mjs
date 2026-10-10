@@ -571,12 +571,13 @@ function health(vault = defaultVaultDir(), now = Date.now(), staleAfterMs = 30 *
   const hb = readJson(path3.join(vault, "heartbeat.json"));
   const vm = readJson(path3.join(vault, "last-verify.json"));
   const recs = fs2.existsSync(path3.join(vault, "manifest.jsonl")) ? readManifest(vault) : [];
-  const conversations = new Set(recs.filter((r) => r.kind === "transcript" || r.kind === "subagent-transcript").map((r) => r.path)).size;
+  const conversations = new Set(recs.filter((r) => r.kind === "transcript").map((r) => r.path)).size;
+  const subagents = new Set(recs.filter((r) => r.kind === "subagent-transcript").map((r) => r.path)).size;
   const files = new Set(recs.filter((r) => r.kind === "file-history").map((r) => r.path)).size;
   if (!hb) return { state: "amber", headline: "Archive has not run yet on this computer.", details: [`Vault: ${vault}`] };
   const age = now - Date.parse(hb.at);
-  const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
-  details.push(`${n(conversations, "conversation", "conversations")} and ${n(files, "AI-edited file", "AI-edited files")} captured (${n(recs.length, "saved version", "saved versions")}).`);
+  const n = (k, one, many) => `${k.toLocaleString("en-US")} ${k === 1 ? one : many}`;
+  details.push(`${n(conversations, "conversation", "conversations")}${subagents ? ` (plus ${n(subagents, "sub-agent conversation", "sub-agent conversations")})` : ""} and ${n(files, "saved version", "saved versions")} of files Claude edited, kept as exact copies.`);
   details.push(`Last capture run: ${ago(age)} (${hb.at}).`);
   if (vm) details.push(`Last integrity check: ${vm.ok} of ${vm.records} verified, ${ago(now - Date.parse(vm.at))}.`);
   else details.push("Integrity has not been checked yet.");
@@ -648,7 +649,7 @@ function notAcceptedMessage(surface = process.env.ROOTZ_ARCHIVE_SURFACE) {
 var NOT_ACCEPTED_MESSAGE = notAcceptedMessage("plugin");
 
 // src/version.ts
-var SERVER_VERSION = "0.5.3";
+var SERVER_VERSION = "0.5.4";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
