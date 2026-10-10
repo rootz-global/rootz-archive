@@ -4,7 +4,6 @@ import {
   LICENCE_VERSION,
   LocalArchive,
   NODE_TOO_OLD_MESSAGE,
-  NOT_ACCEPTED_MESSAGE,
   SERVER_VERSION,
   accept,
   acceptance,
@@ -13,6 +12,7 @@ import {
   defaultVaultDir,
   health,
   nodeOk,
+  notAcceptedMessage,
   projectSlug,
   readSettings,
   snapshot,
@@ -21,7 +21,7 @@ import {
   writeHeartbeat,
   writeSettings,
   writeVerifyMark
-} from "./chunks/chunk-7SVKQPFQ.mjs";
+} from "./chunks/chunk-D6CPGTHD.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import "./chunks/chunk-4TWFJUN4.mjs";
 
@@ -73,6 +73,14 @@ function tightenArchiveHome() {
   try {
     tightenPermissions(process.env.ROOTZ_ARCHIVE_HOME || path2.join(os2.homedir(), ".rootz-archive"));
   } catch {
+  }
+}
+if (!process.env.ROOTZ_ARCHIVE_DEBUG) {
+  for (const k of ["log", "info", "debug"]) {
+    const orig = console[k].bind(console);
+    console[k] = (...a) => {
+      if (!(typeof a[0] === "string" && /^\[(ArchiveDB|extractSubDirectory)\]/.test(a[0]))) orig(...a);
+    };
   }
 }
 async function capture() {
@@ -153,14 +161,21 @@ async function main() {
     } catch {
     }
   }
-  if (!acceptance() && (cmd === "capture" || cmd === "snapshot" || cmd === "session-start")) {
-    if (cmd === "session-start") out(JSON.stringify({ systemMessage: `\u{1F7E0} ${NOT_ACCEPTED_MESSAGE}` }));
+  if (!acceptance() && (cmd === "capture" || cmd === "snapshot" || cmd === "session-start" || cmd === "health")) {
+    if (cmd === "session-start") out(JSON.stringify({ systemMessage: `\u{1F7E0} ${notAcceptedMessage()}` }));
+    else if (cmd === "health") {
+      out(`[NOT STARTED] ${notAcceptedMessage()}`);
+      process.exitCode = 3;
+    } else if (cmd === "capture" && !isHook) out(notAcceptedMessage());
     return;
   }
   switch (cmd) {
     case "capture": {
       const r = await capture();
-      if (!isHook) process.stdout.write(JSON.stringify(r) + "\n");
+      if (!isHook) {
+        if (process.argv.includes("--json")) process.stdout.write(JSON.stringify(r) + "\n");
+        else out("paused" in r ? "Rootz Archive capture is paused (your choice). Resume with /rootz-archive:resume." : "skipped" in r ? "Rootz Archive: another capture is already running; it will finish on its own." : r.captured ? `Rootz Archive: saved ${r.captured} new or changed file(s) and indexed ${r.indexed} conversation(s) on this computer.` : "Rootz Archive: everything is already up to date on this computer (nothing new to save).");
+      }
       return;
     }
     case "snapshot": {
@@ -222,9 +237,21 @@ async function main() {
       process.exitCode = r.failures.length ? 1 : 0;
       return;
     }
-    default:
-      process.stderr.write("usage: archive.mjs accept | pause | resume | exclude [dir] | include [dir] | settings | capture | snapshot | session-start | health | verify | search <q> | transcript <id>\n");
+    default: {
+      const usage = `Rootz Archive ${SERVER_VERSION}
+usage: archive.mjs accept | pause | resume | exclude [dir] | include [dir] | settings | capture [--json] | snapshot | session-start | health | verify | search <words> [--limit N] | transcript <id> | version
+`;
+      if (cmd === "version" || cmd === "--version") {
+        out(SERVER_VERSION);
+        return;
+      }
+      if (cmd === "help" || cmd === "--help" || cmd === "-h") {
+        process.stdout.write(usage);
+        return;
+      }
+      process.stderr.write(usage);
       process.exitCode = 2;
+    }
   }
 }
 main().catch((e) => {

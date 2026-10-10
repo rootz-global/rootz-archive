@@ -27,7 +27,7 @@ A manifest record (`scheme: "rootz-archive-vault/1"`):
 
 `path` is relative to `~/.claude` (the Claude Code folder). Settings, credentials and caches are never captured.
 
-## 2. Search index: `~/.rootz-desktop/`
+## 2. Search index: `~/.rootz-desktop/` (Windows: `%APPDATA%\.rootz-desktop\`)
 | File | Format |
 |---|---|
 | `archives.db` | **SQLite**, the Rootz archive database. **Shared with Rootz Desktop** if you install it. |
@@ -41,7 +41,9 @@ The version you accepted, with the time and the computer name.
 `/rootz-archive:resume`, `/rootz-archive:exclude-project` and `/rootz-archive:include-project`.
 
 ## Deleting your archive
-1. `claude plugin uninstall rootz-archive`. Do this first, or the next session will capture again.
+On Windows, `~` below is `%USERPROFILE%` for `.rootz-archive`, and `.rootz-desktop` is in `%APPDATA%`.
+1. `claude plugin uninstall rootz-archive` (and `claude plugin marketplace remove rootz`). Do this first, or the next
+   session will capture again.
 2. Delete `~/.rootz-archive/`.
 3. Delete `~/.rootz-desktop/search.db`. **Delete `~/.rootz-desktop/archives.db` only if you do not use Rootz Desktop**,
    because Desktop uses the same file.

@@ -3,15 +3,16 @@ import { createRequire as __cr } from 'module'; const require = __cr(import.meta
 import {
   LocalArchive,
   NODE_TOO_OLD_MESSAGE,
-  NOT_ACCEPTED_MESSAGE,
   SERVER_VERSION,
+  acceptFromInstallSetting,
   acceptance,
   defaultDataDir,
   defaultVaultDir,
   health,
   nodeOk,
+  notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-7SVKQPFQ.mjs";
+} from "./chunks/chunk-D6CPGTHD.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
   McpServer,
@@ -67,7 +68,7 @@ function createServer(source) {
     };
     server.registerTool(name, config, async (...args) => {
       if (!UNGATED.has(name)) {
-        if (!acceptance()) return text(NOT_ACCEPTED_MESSAGE, true);
+        if (!acceptance()) return text(notAcceptedMessage(), true);
         await open();
       }
       return cb(...args);
@@ -327,9 +328,12 @@ ${body}`);
     description: TAG + "Is Archive working? Plain-language health of capture on this computer: green / amber / red with the reason. Call it when the user asks whether their conversations are being kept.",
     inputSchema: {}
   }, async () => {
-    if (!acceptance()) return text(`\u{1F7E0} ${NOT_ACCEPTED_MESSAGE}`);
+    if (!acceptance()) return text(`\u{1F7E0} ${notAcceptedMessage()}`);
     if (readSettings().paused) return text("\u23F8 Rootz Archive capture is paused (your choice). Search still works. Type /rootz-archive:resume to resume.");
     const h = health(process.env.ROOTZ_VAULT_DIR || defaultVaultDir());
+    if (process.env.ROOTZ_ARCHIVE_SURFACE === "mcpb" && h.headline.startsWith("Archive has not run yet")) {
+      return text("\u{1F7E2} Rootz Archive search is ready in Claude Desktop. Desktop does not capture by itself: ask me to run index_local_sessions to index your Claude Code conversations now, or install the Rootz Archive Claude Code plugin for continuous, exact-copy capture.");
+    }
     const icon = { green: "\u{1F7E2}", amber: "\u{1F7E0}", red: "\u{1F534}" }[h.state];
     return text(`${icon} ${h.headline}
 
@@ -388,6 +392,10 @@ async function main() {
     );
     await server2.connect(new StdioServerTransport());
     return;
+  }
+  try {
+    acceptFromInstallSetting();
+  } catch {
   }
   const archive = await LocalArchive.open(defaultDataDir());
   const server = createServer(archive);

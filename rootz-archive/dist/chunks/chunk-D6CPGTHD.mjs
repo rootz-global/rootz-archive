@@ -627,17 +627,28 @@ function acceptance() {
     return null;
   }
 }
-function accept(now = /* @__PURE__ */ new Date()) {
-  const a = { version: LICENCE_VERSION, acceptedAt: now.toISOString(), host: os4.hostname() };
+function accept(now = /* @__PURE__ */ new Date(), method = "claude-code-command") {
+  const a = { version: LICENCE_VERSION, acceptedAt: now.toISOString(), host: os4.hostname(), method };
   fs4.mkdirSync(path5.dirname(file2()), { recursive: true, mode: 448 });
   fs4.appendFileSync(path5.join(path5.dirname(file2()), "licence-acceptances.jsonl"), JSON.stringify(a) + "\n", { mode: 384 });
   fs4.writeFileSync(file2(), JSON.stringify(a), { mode: 384 });
   return a;
 }
-var NOT_ACCEPTED_MESSAGE = `Rootz Archive is installed but NOT archiving yet. To start, read the licence (${LICENCE_FILE} in the Rootz Archive plugin folder) and type /rootz-archive:accept to accept it.`;
+function acceptFromInstallSetting() {
+  const v = (process.env.ROOTZ_ARCHIVE_ACCEPT_LICENCE ?? "").trim().toLowerCase();
+  if (v !== "true" && v !== "1") return null;
+  return acceptance() ?? accept(/* @__PURE__ */ new Date(), "claude-desktop-install-setting");
+}
+function notAcceptedMessage(surface = process.env.ROOTZ_ARCHIVE_SURFACE) {
+  const read = `The licence is ${LICENCE_FILE} in the Rootz Archive folder and on the Rootz Archive GitHub page (rootz-global/rootz-archive).`;
+  if (surface === "mcpb") return `Rootz Archive is installed but NOT archiving yet. To start, open Claude Desktop \u2192 Settings \u2192 Extensions \u2192 Rootz Archive, read the licence, tick "I accept the Rootz Archive Use Licence", and save. ${read}`;
+  if (surface === "vscode") return `Rootz Archive is installed but NOT archiving yet. To start, click "Rootz Archive: accept to start" in the VS Code status bar. ${read}`;
+  return `Rootz Archive is installed but NOT archiving yet. To start, type /rootz-archive:accept in Claude Code. ${read}`;
+}
+var NOT_ACCEPTED_MESSAGE = notAcceptedMessage("plugin");
 
 // src/version.ts
-var SERVER_VERSION = "0.5.2";
+var SERVER_VERSION = "0.5.3";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
@@ -662,7 +673,8 @@ export {
   LICENCE_VERSION,
   acceptance,
   accept,
-  NOT_ACCEPTED_MESSAGE,
+  acceptFromInstallSetting,
+  notAcceptedMessage,
   SERVER_VERSION,
   nodeOk,
   NODE_TOO_OLD_MESSAGE

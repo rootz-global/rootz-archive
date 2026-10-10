@@ -14,8 +14,8 @@ your AI search it. **Free for individual users**, under the [Rootz Archive Use L
   - `SessionEnd` captures and indexes.
   - Every hook runs `node dist/archive.mjs …`.
   - **Nothing is captured until you type `/rootz-archive:accept`.**
-- **MCP server `archive-free`** (`node dist/server.mjs` plus its `dist/chunks/`, stdio; readable, unminified, every file ≤ 256 KiB): 14 tools: search, recall, summaries, status, and
-  licence acceptance.
+- **MCP server `archive-free`** (`node dist/server.mjs` plus its `dist/chunks/`, stdio; readable, unminified, every file ≤ 256 KiB): 13 tools: search, recall, summaries and
+  status. None of them can accept the licence; only you can.
 - **Commands:**
   - `/rootz-archive:accept` (the only way to start capture; it runs the plugin's own accept step);
   - `/rootz-archive:archive` (status);
@@ -33,8 +33,8 @@ tool, the result goes to your AI provider as part of your conversation, as with 
 - `~/.rootz-archive/vault/`: exact, byte-for-byte copies (gzip, named by SHA-256) of `~/.claude/projects/**`
   (transcripts, sub-agent transcripts, tool results, memory), `~/.claude/file-history/**` and `~/.claude/history.jsonl`.
   It never copies settings, credentials or caches. It never deletes anything itself.
-- `~/.rootz-desktop/archives.db` + `search.db`: the searchable index (SQLite). This is shared with Rootz Desktop if
-  you install it.
+- `~/.rootz-desktop/archives.db` + `search.db` (on Windows `%APPDATA%\.rootz-desktop\`): the searchable index
+  (SQLite). This is shared with Rootz Desktop if you install it.
 - `~/.rootz-archive/licence-accepted.json`: the licence version you accepted, and when.
 - `~/.rootz-archive/bin/archive-free-mcp.mjs`: a launcher for using the archive from other AI tools.
 
@@ -54,7 +54,7 @@ and `ROOTZ_ARCHIVE_DIR` to empty directories before starting Claude Code; the pl
 ## Troubleshooting
 - **"NOT archiving yet":** type `/rootz-archive:accept`. Nothing is read or captured before that.
 - **"could not start its status check" / "needs Node.js":** run `node --version`. Rootz Archive needs **22.13 or
-  newer**; install it from https://nodejs.org, then start a new session.
+  newer**; install it from https://nodejs.org (Windows, macOS and Linux installers), then start a new session.
 - **Status 🟠 "Not captured for …":** start a new session (capture runs at session start and end), or check
   `/rootz-archive:pause` isn't on.
 - **Status 🔴 "do not match their fingerprint":** a saved copy changed on disk. Run
