@@ -48,7 +48,8 @@ Just ask Claude:
 - "Find the session where we fixed the upload bug."
 - "Is Rootz Archive working?"
 
-Or type `/rootz-archive:archive` for a summary of what's captured.
+Or type `/rootz-archive:archive` for a summary of what's captured, or `/rootz-archive:dashboard` to open a dashboard
+page on your computer: what's protected, integrity, time span and recall. It's a local file, and nothing is sent anywhere.
 
 Your AI can also **summarise past sessions with your own Claude account** and add the summaries to the search. Ask
 "summarise my five longest unsummarised sessions". Archive never holds an AI key, and summaries never replace the
