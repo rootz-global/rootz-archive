@@ -33,13 +33,17 @@ pasted into a conversation**. Rootz Archive copies them exactly as they are.
   archive, and which version of each file it last saved.
 - `~/.rootz-archive/settings.json`: your pause setting and the projects you excluded.
 - `~/.rootz-archive/bin/archive-free-mcp.mjs`: a small launcher so other AI tools on your computer can search the archive.
+- `~/.rootz-archive/recall.jsonl`: each time your AI reads from the archive, the tool's name and the time. Never what
+  was asked or what came back. It feeds the dashboard's Recall count.
+- `~/.rootz-archive/dashboard.html`: your dashboard page, written only when you run `/rootz-archive:dashboard`. It is
+  a plain file with no scripts and no links to the internet.
 
 Folders are created owner-only (0700) and files owner-only (0600).
 
 ## What it sends
 **Nothing.** The plugin makes no network connections; a build check refuses any release containing network code. It
-starts no programs other than its own capture step (Node running the plugin's own `dist/archive.mjs`), and downloads
-nothing.
+starts no programs other than its own capture step (Node running the plugin's own `dist/archive.mjs`) and, only when
+you run `/rootz-archive:dashboard`, your default browser to open the dashboard file. It downloads nothing.
 
 **Background capture:** at session start, if the archive isn't up to date, the plugin starts one background capture of
 its own (the same local copy step), which may finish after the session ends.

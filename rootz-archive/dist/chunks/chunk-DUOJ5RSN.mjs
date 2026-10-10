@@ -226,6 +226,13 @@ var LocalArchive = class _LocalArchive {
     this.search.close();
     this.db.close();
   }
+  /** Oldest and newest searchable conversation (ms) and the number of projects, for the dashboard. */
+  async timeSpan() {
+    const r = this.sql.prepare(
+      "SELECT MIN(first_message_at) AS oldest, MAX(last_message_at) AS newest, COUNT(DISTINCT project_slug) AS projects FROM session_metadata"
+    ).get();
+    return { oldest: r.oldest ?? null, newest: r.newest ?? null, projects: r.projects ?? 0 };
+  }
   /** Raw better-sqlite3 handle, for the few reads ArchiveDatabase has no method for. */
   get sql() {
     return this.db.db;
@@ -649,7 +656,7 @@ function notAcceptedMessage(surface = process.env.ROOTZ_ARCHIVE_SURFACE) {
 var NOT_ACCEPTED_MESSAGE = notAcceptedMessage("plugin");
 
 // src/version.ts
-var SERVER_VERSION = "0.5.4";
+var SERVER_VERSION = "0.6.0";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);
@@ -663,6 +670,7 @@ export {
   defaultVaultDir,
   claudeCodeSource,
   tightenPermissions,
+  readManifest,
   snapshot,
   verify,
   writeHeartbeat,

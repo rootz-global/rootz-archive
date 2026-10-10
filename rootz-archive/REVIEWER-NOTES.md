@@ -22,6 +22,10 @@ that computer.** (Rootz's position, 2026-10-09.)
 - **Background capture process:** at session start, if the archive isn't up to date, the plugin starts one detached
   capture of its own (`node dist/archive.mjs capture`). It copies local files, takes a lock so only one runs at a time,
   and exits. It may finish after the session ends. It never starts another program and makes no network connections.
+- **`/rootz-archive:dashboard`** (user-typed only; `allowed-tools` is that exact line): writes a self-contained
+  `~/.rootz-archive/dashboard.html` (0600; no scripts, no external fonts, images or links) from local counts, then asks the
+  OS to open it (`open` / `start` / `xdg-open`). Its Recall tile reads `~/.rootz-archive/recall.jsonl`, which the MCP
+  server appends to on each archive-reading tool call: tool name and time only, never arguments or results.
 - **Shared database with Rootz Desktop:** `~/.rootz-desktop/archives.db` is the same file Rootz Desktop uses, by design,
   so a user who later installs Desktop keeps one archive. SQLite WAL mode allows both to use it safely.
 - **The launcher file** (`~/.rootz-archive/bin/archive-free-mcp.mjs`) lets the user's other AI tools search the same

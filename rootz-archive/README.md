@@ -19,6 +19,7 @@ your AI search it. **Free for individual users**, under the [Rootz Archive Use L
 - **Commands:**
   - `/rootz-archive:accept` (the only way to start capture; it runs the plugin's own accept step);
   - `/rootz-archive:archive` (status);
+  - `/rootz-archive:dashboard` (writes a local page, `~/.rootz-archive/dashboard.html`, and opens it in your browser);
   - `/rootz-archive:pause` and `/rootz-archive:resume`;
   - `/rootz-archive:exclude-project` and `/rootz-archive:include-project` (for the current folder's project).
 - **Background capture:** at session start, if the archive isn't up to date, the plugin starts one capture of its own
@@ -37,6 +38,9 @@ tool, the result goes to your AI provider as part of your conversation, as with 
   (SQLite). This is shared with Rootz Desktop if you install it.
 - `~/.rootz-archive/licence-accepted.json`: the licence version you accepted, and when.
 - `~/.rootz-archive/bin/archive-free-mcp.mjs`: a launcher for using the archive from other AI tools.
+- `~/.rootz-archive/recall.jsonl`: when your AI read from the archive (tool name and time only, never what it asked),
+  for the dashboard's Recall count.
+- `~/.rootz-archive/dashboard.html`: the dashboard page, written only when you run `/rootz-archive:dashboard`.
 
 Formats and deletion: [FORMAT.md](FORMAT.md). Privacy: [PRIVACY.md](PRIVACY.md). Open-source components: [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
 Not affiliated with Anthropic.

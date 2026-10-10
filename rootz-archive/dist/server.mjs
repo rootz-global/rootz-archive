@@ -12,7 +12,7 @@ import {
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-K6WABS5I.mjs";
+} from "./chunks/chunk-DUOJ5RSN.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
   McpServer,
@@ -30,6 +30,8 @@ import "./chunks/chunk-4TWFJUN4.mjs";
 
 // src/tools.ts
 import * as os from "os";
+import * as fs from "fs";
+import * as path from "path";
 var SERVER_NAME = "archive-free";
 var SOURCE_LABEL = `Rootz Archive \xB7 this computer (${os.hostname().replace(/\.local$/, "")})`;
 var text = (t, isError = false) => ({
@@ -46,6 +48,15 @@ var shortPath = (f) => {
 };
 var WRITE_TOOLS = /* @__PURE__ */ new Set(["add_summary", "index_local_sessions"]);
 var UNGATED = /* @__PURE__ */ new Set(["archive_status"]);
+var NOT_RECALL = /* @__PURE__ */ new Set(["archive_status", "get_archive_stats", "add_summary", "index_local_sessions"]);
+function logRecall(tool) {
+  if (NOT_RECALL.has(tool)) return;
+  try {
+    const home = process.env.ROOTZ_ARCHIVE_HOME || path.join(os.homedir(), ".rootz-archive");
+    fs.appendFileSync(path.join(home, "recall.jsonl"), JSON.stringify({ at: (/* @__PURE__ */ new Date()).toISOString(), tool }) + "\n", { mode: 384 });
+  } catch {
+  }
+}
 function createServer(source) {
   const server = new McpServer({ name: SERVER_NAME, version: SERVER_VERSION });
   let archive;
@@ -70,6 +81,7 @@ function createServer(source) {
       if (!UNGATED.has(name)) {
         if (!acceptance()) return text(notAcceptedMessage(), true);
         await open();
+        logRecall(name);
       }
       return cb(...args);
     });
@@ -398,12 +410,12 @@ async function main() {
     acceptFromInstallSetting();
   } catch {
   }
-  const archive = await LocalArchive.open(defaultDataDir());
-  const server = createServer(archive);
+  let opened;
+  const server = createServer(async () => opened = await LocalArchive.open(defaultDataDir()));
   await server.connect(new StdioServerTransport());
   const shutdown = () => {
     try {
-      archive.close();
+      opened?.close();
     } finally {
       process.exit(0);
     }
