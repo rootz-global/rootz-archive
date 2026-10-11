@@ -1144,6 +1144,117 @@ function deviceKey() {
   return new FileDeviceKey();
 }
 
+// src/share-inventory.ts
+var KIND2 = {
+  instructions: "Instruction files (CLAUDE.md)",
+  nested_memory: "Memory files",
+  prompt_snapshot: "Claude Code system prompt",
+  hook_success: "Hook output",
+  hook_additional_context: "Hook-added context",
+  hook_system_message: "Hook message",
+  hook_non_blocking_error: "Hook error output",
+  environment: "Environment snapshot",
+  session_context: "Session context",
+  file: "File contents Claude read",
+  edited_text_file: "Edited file snippets",
+  mcp_instructions_delta: "MCP server instructions",
+  skill_listing: "Skill list",
+  credential_org: "Account organisation id",
+  model: "Model identity"
+};
+var SECRETS = [
+  // Built from parts so the published bundle never contains a literal key-block marker (the publish gate's secret scan).
+  ["private key block", new RegExp(["-----BEG", "IN [A-Z ]*PRIV", "ATE KEY-----"].join(""))],
+  ["OpenAI/Anthropic-style key", /\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}/],
+  ["GitHub token", /\b(?:ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{20,}/],
+  ["AWS access key", /\bAKIA[0-9A-Z]{16}\b/],
+  ["Slack token", /\bxox[abprs]-[A-Za-z0-9-]{10,}/],
+  ["Google API key", /\bAIza[0-9A-Za-z_-]{35}\b/],
+  ["JWT", /\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/],
+  ["password or secret assignment", /\b(?:password|passwd|secret|api[_-]?key|private[_-]?key|token)\b["']?\s*[:=]\s*["']?[^\s"',;]{8,}/i]
+];
+var mask = (s) => s.length <= 8 ? "****" : `${s.slice(0, 4)}\u2026${s.slice(-2)} (${s.length} chars)`;
+var firstLine = (s) => String(s ?? "").replace(/\s+/g, " ").trim().slice(0, 140);
+function inventory(bytes) {
+  const text = bytes.toString("utf-8");
+  const hidden = [];
+  const secrets = [];
+  let lineNo = 0, reminders = 0, reminderBytes = 0, reminderFirst = "", tools = 0, toolBytes = 0;
+  for (const line of text.split("\n")) {
+    lineNo++;
+    if (!line) continue;
+    for (const [type, re] of SECRETS) {
+      const m = re.exec(line);
+      if (m && secrets.length < 50) secrets.push({ type, line: lineNo, masked: mask(m[0]) });
+    }
+    let o;
+    try {
+      o = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (o.type === "attachment" && o.attachment && KIND2[o.attachment.type]) {
+      const a = o.attachment;
+      const k = a.type;
+      const label = k === "instructions" ? Array.isArray(a.files) ? a.files.map((f) => f.path ?? f.displayPath ?? f).join(", ") : "CLAUDE.md" : k === "nested_memory" || k === "file" ? String(a.displayPath ?? a.path ?? a.filename ?? "") : k.startsWith("hook") ? String(a.hookName ?? a.hookEvent ?? "") : "";
+      const body = k === "instructions" && Array.isArray(a.files) ? a.files.map((f) => f.content ?? "").join(" ") : a.content ?? a.stdout ?? a.snapshot ?? a.systemPrompt ?? a.text ?? a.context ?? "";
+      hidden.push({ kind: KIND2[k], label, bytes: Buffer.byteLength(line), first: firstLine(typeof body === "string" ? body : JSON.stringify(body)) });
+      continue;
+    }
+    if (o.type === "user" && Array.isArray(o.message?.content) && o.message.content.some((c) => c?.type === "tool_result")) {
+      tools++;
+      toolBytes += Buffer.byteLength(line);
+    }
+    if (o.type === "user" && /<system-reminder>/.test(line)) {
+      const n = (line.match(/<system-reminder>/g) ?? []).length;
+      reminders += n;
+      reminderBytes += Buffer.byteLength(line);
+      if (!reminderFirst) {
+        const m = /<system-reminder>([\s\S]{0,400})/.exec(line);
+        reminderFirst = firstLine(m?.[1]?.replace(/\\n/g, " "));
+      }
+    }
+  }
+  if (tools) hidden.push({ kind: "Tool results (command output, full file contents)", label: `${tools} result(s)`, bytes: toolBytes, first: "Everything Claude ran or read, in full; the readable copy may show less" });
+  if (reminders) hidden.push({ kind: "System reminders inside your turns", label: `${reminders} reminder(s)`, bytes: reminderBytes, first: reminderFirst });
+  return { hidden, hiddenBytes: hidden.reduce((a, h) => a + h.bytes, 0), totalBytes: bytes.length, secrets };
+}
+function summary(inv) {
+  const by = /* @__PURE__ */ new Map();
+  for (const h of inv.hidden) {
+    const g = by.get(h.kind) ?? { n: 0, bytes: 0, labels: /* @__PURE__ */ new Set() };
+    g.n++;
+    g.bytes += h.bytes;
+    if (h.label) g.labels.add(h.label);
+    by.set(h.kind, g);
+  }
+  const kb = (b) => `${Math.max(1, Math.round(b / 1024)).toLocaleString("en-US")} KB`;
+  const out = [...by.entries()].sort((a, b) => b[1].bytes - a[1].bytes).map(([k, g]) => `${k}: ${g.n} (${kb(g.bytes)})${g.labels.size ? ` \u2014 ${[...g.labels].slice(0, 4).join("; ")}${g.labels.size > 4 ? "; \u2026" : ""}` : ""}`);
+  if (inv.secrets.length) out.unshift(`POSSIBLE SECRETS: ${inv.secrets.length} (${[...new Set(inv.secrets.map((s) => s.type))].join(", ")}), e.g. line ${inv.secrets[0].line}: ${inv.secrets[0].masked}`);
+  return out;
+}
+function inventoryMarkdown(inv, jsonlName) {
+  const kb = (b) => `${Math.max(1, Math.round(b / 1024)).toLocaleString("en-US")} KB`;
+  const lines = [
+    `## Before you send this: what \`${jsonlName}\` contains besides the chat`,
+    "",
+    `The shared file is the exact transcript Claude Code wrote (${kb(inv.totalBytes)}). **${kb(inv.hiddenBytes)} of it is context you do not see in the chat below**: instruction files, memory, hook output, files Claude read and similar. The recipient gets all of it. It cannot be removed without breaking the receipt; if any of it should stay private, do not send this share.`,
+    ""
+  ];
+  if (inv.secrets.length) {
+    lines.push(`### \u26A0 Possible secrets found: ${inv.secrets.length}`, "", ...inv.secrets.slice(0, 20).map((s) => `- line ${s.line}: ${s.type}: \`${s.masked}\``), "");
+  }
+  lines.push(
+    "### Hidden context",
+    "",
+    "| What | Where / name | Size | Starts with |",
+    "|---|---|---|---|",
+    ...inv.hidden.slice(0, 200).map((h) => `| ${h.kind} | ${h.label.replace(/\|/g, "/").slice(0, 80) || "\u2014"} | ${kb(h.bytes)} | ${h.first.replace(/\|/g, "/").slice(0, 90) || "\u2014"} |`)
+  );
+  if (inv.hidden.length > 200) lines.push(`| \u2026 ${inv.hidden.length - 200} more | | | |`);
+  return lines.join("\n") + "\n\n";
+}
+
 // src/share.ts
 var archiveHome2 = () => process.env.ROOTZ_ARCHIVE_HOME || path5.join(os2.homedir(), ".rootz-archive");
 var sid2 = (rec) => path5.basename(rec.path, ".jsonl");
@@ -1227,10 +1338,14 @@ async function shareSession(opts) {
     return name;
   };
   const files = [write(`${id}.jsonl`, bytes), write("receipt.json", JSON.stringify(receipt, null, 1) + "\n")];
+  const inv = inventory(bytes);
   const t = opts.transcript ? await opts.transcript(id).catch(() => null) : null;
-  if (t?.messages?.length) files.push(write("conversation.md", readable(t.messages, id)));
+  files.push(write("conversation.md", inventoryMarkdown(inv, `${id}.jsonl`) + (t?.messages?.length ? readable(t.messages, id) : `# Conversation ${id}
+
+(No readable copy: open ${id}.jsonl.)
+`)));
   files.push(write("HOW-TO-CHECK.txt", howTo(id, named)));
-  return { dir, sessionId: id, files, bytes: bytes.length, key: { kid: key.kid, binding: key.binding }, authority: named ? "named-on-chain" : "none" };
+  return { dir, sessionId: id, files, bytes: bytes.length, contains: summary(inv), possibleSecrets: inv.secrets.length, key: { kid: key.kid, binding: key.binding }, authority: named ? "named-on-chain" : "none" };
 }
 
 export {

@@ -2,7 +2,7 @@
 import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);
 import {
   shareSession
-} from "./chunks/chunk-43YP6AAX.mjs";
+} from "./chunks/chunk-GK5BTMTW.mjs";
 import {
   LICENCE_VERSION,
   LocalArchive,
@@ -16,7 +16,7 @@ import {
   projectSlug,
   readSettings,
   writeSettings
-} from "./chunks/chunk-IX5EAQIY.mjs";
+} from "./chunks/chunk-GWVUZFBS.mjs";
 import {
   claudeCodeSource,
   defaultVaultDir,
@@ -436,7 +436,9 @@ async function main() {
         out(`Rootz Archive made a share with a capture receipt (conversation ${r.sessionId}, ${r.bytes.toLocaleString("en-US")} bytes), on this computer only:
   ${r.dir}
 Send the whole folder. The recipient checks it at https://receipts.rootz.global/verify (in their browser; nothing is uploaded).
-Before you send it: it is the WHOLE conversation, including anything pasted into it (keys, personal data). Read it first.
+BEFORE YOU SEND IT: the file is the WHOLE transcript, including context you never saw in the chat:
+` + r.contains.map((c) => `  - ${c}`).join("\n") + `
+  The list, with sizes and first lines, is at the top of conversation.md. Nothing can be removed without breaking the receipt; if any of it should stay private, do not send this share.
 ` + (r.authority === "none" ? `"Authorized by" will show as unavailable: this device (${r.key.binding === "secure-enclave" ? "Secure Enclave key" : "key stored on this computer"}) is not named on chain by its owner.` : "Authorized by: this device is named on chain by its owner."));
       } finally {
         archive.close();
