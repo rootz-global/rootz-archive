@@ -3,7 +3,7 @@
   "name": "global.rootz/archive",
   "title": "Rootz Archive",
   "description": "Search your local Claude Code archive. For continuous capture, use the Rootz Archive plugin.",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "websiteUrl": "https://archive.rootz.global",
   "repository": {
     "url": "https://github.com/rootz-global/rootz-archive",
@@ -12,8 +12,8 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/rootz-global/rootz-archive/releases/download/v0.7.1/rootz-archive-0.7.1.mcpb",
-      "fileSha256": "ce8a9a2a6ca42ce28d11ede8fba089549a25c9f504ac6878bfb991f63a04b151",
+      "identifier": "https://github.com/rootz-global/rootz-archive/releases/download/v0.7.2/rootz-archive-0.7.2.mcpb",
+      "fileSha256": "51eed6f9c0a096199f53d724f333af277f8adf4da14941a9136d0cdde9bfd9fb",
       "transport": {
         "type": "stdio"
       }
