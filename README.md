@@ -51,6 +51,14 @@ Just ask Claude:
 Or type `/rootz-archive:archive` for a summary of what's captured, or `/rootz-archive:dashboard` to open a dashboard
 page on your computer: what's protected, integrity, time span and recall. It's a local file, and nothing is sent anywhere.
 
+**Share a conversation, with proof.** Type `/rootz-archive:share` (this project's latest conversation), or ask Claude
+"share my session about the login flow". You get a folder on your computer with the exact conversation file, a
+**capture receipt**, and a readable copy. Send the folder yourself; Rootz Archive sends nothing. The recipient checks it
+at [receipts.rootz.global/verify](https://receipts.rootz.global/verify), in their browser with nothing uploaded: change one
+byte and the check fails. The share holds the whole conversation, including anything pasted into it, so read it before
+sending. By default the receipt shows the bytes and this computer's signature. "Authorized by" is shown only once the
+owner has named the device on chain (Rootz Desktop / Rootz Receipts).
+
 Your AI can also **summarise past sessions with your own Claude account** and add the summaries to the search. Ask
 "summarise my five longest unsummarised sessions". Archive never holds an AI key, and summaries never replace the
 original conversation.
