@@ -388,8 +388,21 @@ function acceptFromInstallSetting() {
   if (v !== "true" && v !== "1") return null;
   return acceptance() ?? accept(/* @__PURE__ */ new Date(), "claude-desktop-install-setting");
 }
+function previousVersion() {
+  try {
+    const v = JSON.parse(fs3.readFileSync(file2(), "utf-8")).version;
+    return v && v !== LICENCE_VERSION ? String(v) : null;
+  } catch {
+    return null;
+  }
+}
 function notAcceptedMessage(surface = process.env.ROOTZ_ARCHIVE_SURFACE) {
   const read = `The licence is ${LICENCE_FILE} in the Rootz Archive folder and on the Rootz Archive GitHub page (rootz-global/rootz-archive).`;
+  const prev = previousVersion();
+  if (prev) {
+    const act = surface === "mcpb" ? 'tick "I accept the Rootz Archive Use Licence" again in Claude Desktop \u2192 Settings \u2192 Extensions \u2192 Rootz Archive' : surface === "vscode" ? 'click "Rootz Archive: accept to start" in the VS Code status bar' : "type /rootz-archive:accept in Claude Code";
+    return `The Rootz Archive licence was updated (you accepted version ${prev}; it is now ${LICENCE_VERSION}), so archiving is paused until you accept the new version. Your archive is untouched. To continue, ${act}. ${read}`;
+  }
   if (surface === "mcpb") return `Rootz Archive is installed but NOT archiving yet. To start, open Claude Desktop \u2192 Settings \u2192 Extensions \u2192 Rootz Archive, read the licence, tick "I accept the Rootz Archive Use Licence", and save. ${read}`;
   if (surface === "vscode") return `Rootz Archive is installed but NOT archiving yet. To start, click "Rootz Archive: accept to start" in the VS Code status bar. ${read}`;
   return `Rootz Archive is installed but NOT archiving yet. To start, type /rootz-archive:accept in Claude Code. ${read}`;
@@ -397,7 +410,7 @@ function notAcceptedMessage(surface = process.env.ROOTZ_ARCHIVE_SURFACE) {
 var NOT_ACCEPTED_MESSAGE = notAcceptedMessage("plugin");
 
 // src/version.ts
-var SERVER_VERSION = "0.7.0";
+var SERVER_VERSION = "0.7.1";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);

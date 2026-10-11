@@ -10,7 +10,7 @@ import {
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-LNPTRHUT.mjs";
+} from "./chunks/chunk-IX5EAQIY.mjs";
 import {
   defaultVaultDir,
   health
@@ -359,7 +359,7 @@ ${h.details.map((d) => `- ${d}`).join("\n")}`, h.state === "red");
   }, async (a) => {
     const id = resolveSessionId(a);
     if (!id) return text("Which conversation? Give a sessionId, or a sessionNumber from list_past_sessions.", true);
-    const { shareSession } = await import("./chunks/share-4S4DEXZY.mjs");
+    const { shareSession } = await import("./chunks/share-SGZZNUDD.mjs");
     try {
       const r = await shareSession({ session: id, transcript: async (sid) => archive.getTranscript(sid) });
       return text(`Share ready, on this computer only: ${r.dir}
@@ -412,6 +412,12 @@ The exact original files are kept separately (byte-for-byte) by Archive's captur
 }
 
 // src/server.ts
+process.removeAllListeners("warning");
+process.on("warning", (w) => {
+  if (w.name === "ExperimentalWarning" && /SQLite/i.test(w.message)) return;
+  process.stderr.write(`${w.name}: ${w.message}
+`);
+});
 for (const k of ["log", "info", "warn", "debug"]) {
   console[k] = (...a) => console.error(...a);
 }

@@ -1068,6 +1068,31 @@ var SecureEnclaveDeviceKey = class {
   }
 };
 
+// src/winacl.ts
+import { execFileSync as execFileSync2 } from "child_process";
+var sid;
+function currentSid() {
+  if (sid !== void 0) return sid;
+  try {
+    const out = execFileSync2("whoami", ["/user", "/fo", "csv", "/nh"], { encoding: "utf-8", windowsHide: true, timeout: 1e4 });
+    sid = (out.trim().split(",").pop() || "").replace(/"/g, "").trim() || null;
+  } catch {
+    sid = null;
+  }
+  return sid;
+}
+function ownerOnlyWindows(target, dir = false) {
+  if (process.platform !== "win32") return false;
+  const s = currentSid();
+  if (!s || !/^S-1-[0-9-]+$/.test(s)) return false;
+  try {
+    execFileSync2("icacls", [target, "/inheritance:r", "/grant:r", `*${s}:${dir ? "(OI)(CI)F" : "F"}`], { stdio: "ignore", windowsHide: true, timeout: 15e3 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // src/device-key.ts
 var archiveHome = () => process.env.ROOTZ_ARCHIVE_HOME || path4.join(os.homedir(), ".rootz-archive");
 var FileDeviceKey = class {
@@ -1080,7 +1105,10 @@ var FileDeviceKey = class {
       fs3.mkdirSync(path4.dirname(file), { recursive: true, mode: 448 });
       const tmp = `${file}.tmp-${process.pid}`;
       fs3.writeFileSync(tmp, JSON.stringify({ kind: "rootz-archive.device-key.v1", created: (/* @__PURE__ */ new Date()).toISOString(), jwk: privateKey.export({ format: "jwk" }) }), { mode: 384 });
+      ownerOnlyWindows(tmp);
       fs3.renameSync(tmp, file);
+    } else {
+      ownerOnlyWindows(file);
     }
     this.priv = createPrivateKey({ key: JSON.parse(fs3.readFileSync(file, "utf-8")).jwk, format: "jwk" });
     this.kid = jktP256(this.publicJwk());
@@ -1118,10 +1146,10 @@ function deviceKey() {
 
 // src/share.ts
 var archiveHome2 = () => process.env.ROOTZ_ARCHIVE_HOME || path5.join(os2.homedir(), ".rootz-archive");
-var sid = (rec) => path5.basename(rec.path, ".jsonl");
+var sid2 = (rec) => path5.basename(rec.path, ".jsonl");
 function findSession(records, which, projectSlug) {
   const t = records.filter((r) => r.kind === "transcript");
-  const pool = which === "latest" ? projectSlug ? t.filter((r) => r.path.startsWith(`projects/${projectSlug}/`)) : t : t.filter((r) => sid(r) === which);
+  const pool = which === "latest" ? projectSlug ? t.filter((r) => r.path.startsWith(`projects/${projectSlug}/`)) : t : t.filter((r) => sid2(r) === which);
   return pool.length ? pool[pool.length - 1] : null;
 }
 function authorityFor(kid, home) {
@@ -1173,6 +1201,7 @@ async function shareSession(opts) {
   const logId = `archive-device-${key.kid.slice(0, 24)}`;
   const logDir = path5.join(home, "receipts", logId);
   const log = await openDeviceLog({ dir: logDir, logId, signer: key.signer(), binding: key.binding });
+  ownerOnlyWindows(logDir, true);
   const appendedFile = path5.join(logDir, "appended.jsonl");
   const seen = fs4.existsSync(appendedFile) ? fs4.readFileSync(appendedFile, "utf-8").split("\n").filter(Boolean).map((l) => JSON.parse(l)) : [];
   let index = seen.find((s) => s.sha256 === rec.sha256)?.index;
@@ -1187,11 +1216,12 @@ async function shareSession(opts) {
   if (!matchesCommitment(bytes, receipt.subject.event.body)) throw new Error("self-check failed: bytes do not match the receipt");
   const sig = verifyProof(receipt.checkpoint.body, receipt.checkpoint.proofs[0], { at: receipt.checkpoint.body.at, publishedKeys: keys, pinnedKid: key.kid });
   if (!sig.valid) throw new Error(`self-check failed: checkpoint signature (${sig.reasons.join(", ")})`);
-  const id = sid(rec);
+  const id = sid2(rec);
   const base = path5.join(home, "shares", `${now.slice(0, 10)}-${id.slice(0, 8)}`);
   let dir = base;
   for (let n = 2; fs4.existsSync(dir); n++) dir = `${base}-${n}`;
   fs4.mkdirSync(dir, { recursive: true, mode: 448 });
+  ownerOnlyWindows(dir, true);
   const write = (name, data) => {
     fs4.writeFileSync(path5.join(dir, name), data, { mode: 384 });
     return name;

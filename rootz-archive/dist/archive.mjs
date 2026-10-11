@@ -2,7 +2,7 @@
 import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);
 import {
   shareSession
-} from "./chunks/chunk-4BQU6VBO.mjs";
+} from "./chunks/chunk-43YP6AAX.mjs";
 import {
   LICENCE_VERSION,
   LocalArchive,
@@ -16,7 +16,7 @@ import {
   projectSlug,
   readSettings,
   writeSettings
-} from "./chunks/chunk-LNPTRHUT.mjs";
+} from "./chunks/chunk-IX5EAQIY.mjs";
 import {
   claudeCodeSource,
   defaultVaultDir,
@@ -202,6 +202,12 @@ function refreshLauncher(serverPath, version) {
 // src/archive-cli.ts
 import { fileURLToPath } from "url";
 import * as os3 from "os";
+process.removeAllListeners("warning");
+process.on("warning", (w) => {
+  if (w.name === "ExperimentalWarning" && /SQLite/i.test(w.message)) return;
+  process.stderr.write(`${w.name}: ${w.message}
+`);
+});
 for (const k of ["log", "info", "warn", "debug"]) console[k] = (...a) => console.error(...a);
 var out = (line) => process.stdout.write(line + "\n");
 var cmd = process.argv[2];
