@@ -1271,6 +1271,33 @@ function authorityFor(kid, home) {
   }
   return { evidence: { root: "unnamed", legal_anchor: { jurisdiction: "", registry_ids: [] }, hops: [] }, named: false };
 }
+function messagesFromJsonl(bytes) {
+  const out = [];
+  for (const line of bytes.toString("utf-8").split("\n")) {
+    if (!line) continue;
+    let o;
+    try {
+      o = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (o.type !== "user" && o.type !== "assistant" || o.isMeta) continue;
+    const c = o.message?.content;
+    const parts = [];
+    if (typeof c === "string") parts.push(c.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, "").trim());
+    else if (Array.isArray(c)) for (const b of c) {
+      if (b?.type === "text" && b.text) parts.push(String(b.text).replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, "").trim());
+      else if (b?.type === "tool_use") parts.push(`*[tool call: ${b.name}]*`);
+      else if (b?.type === "tool_result") {
+        const t = typeof b.content === "string" ? b.content : JSON.stringify(b.content ?? "");
+        parts.push(`*[tool result: ${Buffer.byteLength(t).toLocaleString("en-US")} bytes]*`);
+      }
+    }
+    const text = parts.filter(Boolean).join("\n\n");
+    if (text) out.push({ role: o.type === "user" ? Array.isArray(c) && c.every((b) => b?.type === "tool_result") ? "tool" : "user" : "assistant", content: text });
+  }
+  return out;
+}
 function readable(messages, id) {
   return `# Conversation ${id}
 
@@ -1339,10 +1366,10 @@ async function shareSession(opts) {
   };
   const files = [write(`${id}.jsonl`, bytes), write("receipt.json", JSON.stringify(receipt, null, 1) + "\n")];
   const inv = inventory(bytes);
-  const t = opts.transcript ? await opts.transcript(id).catch(() => null) : null;
-  files.push(write("conversation.md", inventoryMarkdown(inv, `${id}.jsonl`) + (t?.messages?.length ? readable(t.messages, id) : `# Conversation ${id}
+  const msgs = messagesFromJsonl(bytes);
+  files.push(write("conversation.md", inventoryMarkdown(inv, `${id}.jsonl`) + (msgs.length ? readable(msgs, id) : `# Conversation ${id}
 
-(No readable copy: open ${id}.jsonl.)
+(No readable messages: open ${id}.jsonl.)
 `)));
   files.push(write("HOW-TO-CHECK.txt", howTo(id, named)));
   return { dir, sessionId: id, files, bytes: bytes.length, contains: summary(inv), possibleSecrets: inv.secrets.length, key: { kid: key.kid, binding: key.binding }, authority: named ? "named-on-chain" : "none" };
@@ -1350,5 +1377,6 @@ async function shareSession(opts) {
 
 export {
   findSession,
+  messagesFromJsonl,
   shareSession
 };

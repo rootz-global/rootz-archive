@@ -10,7 +10,7 @@ import {
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-GWVUZFBS.mjs";
+} from "./chunks/chunk-HCLFIZI6.mjs";
 import {
   defaultVaultDir,
   health
@@ -359,10 +359,10 @@ ${h.details.map((d) => `- ${d}`).join("\n")}`, h.state === "red");
   }, async (a) => {
     const id = resolveSessionId(a);
     if (!id) return text("Which conversation? Give a sessionId, or a sessionNumber from list_past_sessions.", true);
-    const { shareSession } = await import("./chunks/share-6Q7LL2UX.mjs");
+    const { shareSession } = await import("./chunks/share-GXSCGBHR.mjs");
     try {
       const r = await shareSession({ session: id, transcript: async (sid) => archive.getTranscript(sid) });
-      return text(`Share ready, on this computer only: ${r.dir}
+      return text(`Share ready, on this computer only: \`${r.dir}\`
 Files: ${r.files.join(", ")} (${r.bytes.toLocaleString("en-US")} bytes of conversation).
 The recipient checks it at https://receipts.rootz.global/verify: choose receipt.json, then ${r.sessionId}.jsonl as the file it covers. Nothing is uploaded.
 BEFORE SENDING, show the user this list: the file is the WHOLE transcript, including context not shown in the chat:

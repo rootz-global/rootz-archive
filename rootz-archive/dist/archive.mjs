@@ -2,7 +2,7 @@
 import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);
 import {
   shareSession
-} from "./chunks/chunk-GK5BTMTW.mjs";
+} from "./chunks/chunk-D3BRPLQD.mjs";
 import {
   LICENCE_VERSION,
   LocalArchive,
@@ -16,7 +16,7 @@ import {
   projectSlug,
   readSettings,
   writeSettings
-} from "./chunks/chunk-GWVUZFBS.mjs";
+} from "./chunks/chunk-HCLFIZI6.mjs";
 import {
   claudeCodeSource,
   defaultVaultDir,
