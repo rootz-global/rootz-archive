@@ -1,28 +1,33 @@
 #!/usr/bin/env node
 import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);
 import {
+  shareSession
+} from "./chunks/chunk-4BQU6VBO.mjs";
+import {
   LICENCE_VERSION,
   LocalArchive,
   NODE_TOO_OLD_MESSAGE,
   SERVER_VERSION,
   accept,
   acceptance,
-  claudeCodeSource,
   defaultDataDir,
-  defaultVaultDir,
-  health,
   nodeOk,
   notAcceptedMessage,
   projectSlug,
-  readManifest,
   readSettings,
+  writeSettings
+} from "./chunks/chunk-LNPTRHUT.mjs";
+import {
+  claudeCodeSource,
+  defaultVaultDir,
+  health,
+  readManifest,
   snapshot,
   tightenPermissions,
   verify,
   writeHeartbeat,
-  writeSettings,
   writeVerifyMark
-} from "./chunks/chunk-S2LY5ZBZ.mjs";
+} from "./chunks/chunk-ONYO6JOV.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import "./chunks/chunk-4TWFJUN4.mjs";
 
@@ -294,12 +299,12 @@ async function main() {
     } catch {
     }
   }
-  if (!acceptance() && (cmd === "capture" || cmd === "snapshot" || cmd === "session-start" || cmd === "health" || cmd === "dashboard")) {
+  if (!acceptance() && (cmd === "capture" || cmd === "snapshot" || cmd === "session-start" || cmd === "health" || cmd === "dashboard" || cmd === "share")) {
     if (cmd === "session-start") out(JSON.stringify({ systemMessage: `\u{1F7E0} ${notAcceptedMessage()}` }));
     else if (cmd === "health") {
       out(`[NOT STARTED] ${notAcceptedMessage()}`);
       process.exitCode = 3;
-    } else if (cmd === "capture" && !isHook || cmd === "dashboard") out(notAcceptedMessage());
+    } else if (cmd === "capture" && !isHook || cmd === "dashboard" || cmd === "share") out(notAcceptedMessage());
     return;
   }
   switch (cmd) {
@@ -411,6 +416,27 @@ async function main() {
       out(`Rootz Archive dashboard written on this computer${openIt ? " and opened in your browser" : ""}: ${file}`);
       return;
     }
+    case "share": {
+      const which = process.argv.slice(3).find((a) => !a.startsWith("--")) ?? "latest";
+      const st = readSettings();
+      if (!st.paused) snapshot([claudeCodeSource(void 0, st.excludeProjects)], vault);
+      const archive = await LocalArchive.open(defaultDataDir());
+      try {
+        const r = await shareSession({
+          session: which,
+          projectSlug: process.argv.includes("--here") ? projectSlug(process.cwd()) : void 0,
+          transcript: async (id) => archive.getTranscript(id)
+        });
+        out(`Rootz Archive made a share with a capture receipt (conversation ${r.sessionId}, ${r.bytes.toLocaleString("en-US")} bytes), on this computer only:
+  ${r.dir}
+Send the whole folder. The recipient checks it at https://receipts.rootz.global/verify (in their browser; nothing is uploaded).
+Before you send it: it is the WHOLE conversation, including anything pasted into it (keys, personal data). Read it first.
+` + (r.authority === "none" ? `"Authorized by" will show as unavailable: this device (${r.key.binding === "secure-enclave" ? "Secure Enclave key" : "key stored on this computer"}) is not named on chain by its owner.` : "Authorized by: this device is named on chain by its owner."));
+      } finally {
+        archive.close();
+      }
+      return;
+    }
     case "verify": {
       const r = verify(vault);
       writeVerifyMark(vault, r);
@@ -420,7 +446,7 @@ async function main() {
     }
     default: {
       const usage = `Rootz Archive ${SERVER_VERSION}
-usage: archive.mjs accept | pause | resume | exclude [dir] | include [dir] | settings | capture [--json] | snapshot | session-start | health | verify | search <words> [--limit N] | transcript <id> | dashboard [--no-open] | version
+usage: archive.mjs accept | pause | resume | exclude [dir] | include [dir] | settings | capture [--json] | snapshot | session-start | health | verify | search <words> [--limit N] | transcript <id> | dashboard [--no-open] | share [<sessionId>|latest] [--here] | version
 `;
       if (cmd === "version" || cmd === "--version") {
         out(SERVER_VERSION);

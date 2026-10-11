@@ -37,6 +37,11 @@ pasted into a conversation**. Rootz Archive copies them exactly as they are.
   was asked or what came back. It feeds the dashboard's Recall count.
 - `~/.rootz-archive/dashboard.html`: your dashboard page, written only when you run `/rootz-archive:dashboard`. It is
   a plain file with no scripts and no links to the internet.
+- `~/.rootz-archive/shares/`: shares you ask for (`/rootz-archive:share`, or asking Claude to share a conversation). A
+  share is a folder with **the whole conversation** and a capture receipt. **Nothing is sent:** you decide whether and to
+  whom to send it. Read it first: it includes anything pasted into the conversation.
+- `~/.rootz-archive/device-key.json` and `receipts/`: the key this computer signs shares with, and its signed log of
+  what it has shared. The receipt carries the key's public half only.
 
 Folders are created owner-only (0700) and files owner-only (0600).
 

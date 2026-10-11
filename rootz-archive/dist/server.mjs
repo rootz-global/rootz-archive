@@ -7,12 +7,14 @@ import {
   acceptFromInstallSetting,
   acceptance,
   defaultDataDir,
-  defaultVaultDir,
-  health,
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-S2LY5ZBZ.mjs";
+} from "./chunks/chunk-LNPTRHUT.mjs";
+import {
+  defaultVaultDir,
+  health
+} from "./chunks/chunk-ONYO6JOV.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
   McpServer,
@@ -46,9 +48,9 @@ var shortPath = (f) => {
   const parts = f.replace(/\\/g, "/").split("/").filter(Boolean);
   return parts.length > 2 ? parts.slice(-2).join("/") : parts.join("/");
 };
-var WRITE_TOOLS = /* @__PURE__ */ new Set(["add_summary", "index_local_sessions"]);
+var WRITE_TOOLS = /* @__PURE__ */ new Set(["add_summary", "index_local_sessions", "share_session"]);
 var UNGATED = /* @__PURE__ */ new Set(["archive_status"]);
-var NOT_RECALL = /* @__PURE__ */ new Set(["archive_status", "get_archive_stats", "add_summary", "index_local_sessions"]);
+var NOT_RECALL = /* @__PURE__ */ new Set(["archive_status", "get_archive_stats", "add_summary", "index_local_sessions", "share_session"]);
 function logRecall(tool) {
   if (NOT_RECALL.has(tool)) return;
   try {
@@ -350,6 +352,24 @@ ${body}`);
     return text(`${icon} ${h.headline}
 
 ${h.details.map((d) => `- ${d}`).join("\n")}`, h.state === "red");
+  });
+  reg("share_session", {
+    description: TAG + "Make a share of one conversation with a capture receipt, at the user's request: the exact conversation file, a receipt anyone can check at receipts.rootz.global/verify, and a readable copy, in a folder on this computer. Nothing is sent anywhere; tell the user the folder path and that the share contains the whole conversation, so they should read it before sending.",
+    inputSchema: { ...sessionRef }
+  }, async (a) => {
+    const id = resolveSessionId(a);
+    if (!id) return text("Which conversation? Give a sessionId, or a sessionNumber from list_past_sessions.", true);
+    const { shareSession } = await import("./chunks/share-4S4DEXZY.mjs");
+    try {
+      const r = await shareSession({ session: id, transcript: async (sid) => archive.getTranscript(sid) });
+      return text(`Share ready, on this computer only: ${r.dir}
+Files: ${r.files.join(", ")} (${r.bytes.toLocaleString("en-US")} bytes of conversation).
+The recipient checks it at https://receipts.rootz.global/verify: choose receipt.json, then ${r.sessionId}.jsonl as the file it covers. Nothing is uploaded.
+It contains the WHOLE conversation, including anything pasted into it; the user should read it before sending.
+` + (r.authority === "none" ? '"Authorized by" will show as unavailable: this device is not named on chain by its owner.' : "Authorized by: this device is named on chain by its owner."));
+    } catch (e) {
+      return text(`Could not make the share: ${e.message}`, true);
+    }
   });
   reg("get_archive_stats", {
     description: TAG + "What the archive holds, in plain words: what is kept as exact copies on this computer, and what is searchable now.",

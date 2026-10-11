@@ -26,6 +26,11 @@ that computer.** (Rootz's position, 2026-10-09.)
   `~/.rootz-archive/dashboard.html` (0600; no scripts, no external fonts, images or links) from local counts, then asks the
   OS to open it (`open` / `start` / `xdg-open`). Its Recall tile reads `~/.rootz-archive/recall.jsonl`, which the MCP
   server appends to on each archive-reading tool call: tool name and time only, never arguments or results.
+- **Share with receipt** (`/rootz-archive:share`, user-typed, exact-line `allowed-tools`; and the `share_session` tool,
+  annotated as a write): writes a folder under `~/.rootz-archive/shares/` (0700/0600) with the exact conversation file,
+  a capture receipt in the open Rootz Receipts format, a readable copy and instructions. **It sends nothing**; the
+  recipient checks the receipt in their browser at receipts.rootz.global/verify, which also uploads nothing. The device
+  key is a local P-256 key (0600) or, where available, a Secure Enclave key; it is never a wallet key.
 - **Shared database with Rootz Desktop:** `~/.rootz-desktop/archives.db` is the same file Rootz Desktop uses, by design,
   so a user who later installs Desktop keeps one archive. SQLite WAL mode allows both to use it safely.
 - **The launcher file** (`~/.rootz-archive/bin/archive-free-mcp.mjs`) lets the user's other AI tools search the same
