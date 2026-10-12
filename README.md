@@ -26,7 +26,7 @@ capture anything until you do. After that, each session opens with a one-line st
 > 🟢 Rootz Archive (this computer): Captured · last capture 2 min ago · 327 conversations and 1,409 AI-edited files
 > captured
 
-Tested on macOS; Windows and Linux are in testing. Please [open an issue](https://github.com/rootz-global/rootz-archive/issues)
+Tested on macOS and Windows; Linux is in testing. Please [open an issue](https://github.com/rootz-global/rootz-archive/issues)
 if anything breaks.
 
 **Windows:** if `claude plugin marketplace add` fails with `EBUSY: resource busy or locked`, install from a local clone
