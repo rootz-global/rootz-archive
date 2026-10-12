@@ -16,7 +16,7 @@ import {
   projectSlug,
   readSettings,
   writeSettings
-} from "./chunks/chunk-QSUWPVIM.mjs";
+} from "./chunks/chunk-XC22NWWB.mjs";
 import {
   claudeCodeSource,
   defaultVaultDir,

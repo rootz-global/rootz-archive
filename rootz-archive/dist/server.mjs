@@ -10,10 +10,11 @@ import {
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-QSUWPVIM.mjs";
+} from "./chunks/chunk-XC22NWWB.mjs";
 import {
   defaultVaultDir,
-  health
+  health,
+  readManifest
 } from "./chunks/chunk-ONYO6JOV.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
@@ -50,6 +51,22 @@ var shortPath = (f) => {
 };
 var WRITE_TOOLS = /* @__PURE__ */ new Set(["add_summary", "index_local_sessions", "share_session"]);
 var UNGATED = /* @__PURE__ */ new Set(["archive_status"]);
+var localIdsCache = null;
+function localSessionIds() {
+  const vault = process.env.ROOTZ_VAULT_DIR || defaultVaultDir();
+  if (localIdsCache && localIdsCache.vault === vault && Date.now() - localIdsCache.at < 6e4) return localIdsCache.ids;
+  const ids = /* @__PURE__ */ new Set();
+  try {
+    for (const r of readManifest(vault)) if (r.kind === "transcript") ids.add(path.basename(r.path, ".jsonl"));
+  } catch {
+  }
+  localIdsCache = { vault, at: Date.now(), ids };
+  return ids;
+}
+var elsewhere = (sid) => {
+  const ids = localSessionIds();
+  return ids.size > 0 && !ids.has(sid) ? " \xB7 from Rootz Desktop (not captured on this computer)" : "";
+};
 var NOT_RECALL = /* @__PURE__ */ new Set(["archive_status", "get_archive_stats", "add_summary", "index_local_sessions", "share_session"]);
 function logRecall(tool) {
   if (NOT_RECALL.has(tool)) return;
@@ -108,7 +125,7 @@ function createServer(source) {
       const body2 = hits.map((h, i) => {
         const icon = h.kind === "summary" ? "\u{1F4DD}" : h.role === "human" ? "\u{1F464}" : "\u{1F916}";
         const label = h.kind === "summary" ? `summary by ${h.model}` : h.role;
-        return `${i + 1}. ${icon} ${label}${h.timestamp ? ` \xB7 ${date(h.timestamp)}` : ""}
+        return `${i + 1}. ${icon} ${label}${h.timestamp ? ` \xB7 ${date(h.timestamp)}` : ""}${elsewhere(h.sessionId)}
    Session: ${h.sessionId}${h.projectSlug ? `
    Project: ${h.projectSlug}` : ""}
    ${h.snippet.replace(/\s+/g, " ")}`;
@@ -195,7 +212,7 @@ ${body}`);
 ` : "";
       const topics = s.topics.length ? `   Topics: ${s.topics.slice(0, 5).join(", ")}
 ` : "";
-      return `#${i + 1}. ${s.projectSlug}${s.hasErrors ? " [ERRORS]" : ""}
+      return `#${i + 1}. ${s.projectSlug}${s.hasErrors ? " [ERRORS]" : ""}${elsewhere(s.sessionId)}
    Session: ${s.sessionId}
 ${summary}   ${stats}
 ${files}${topics}${s.lastMessageAt ? `   Date: ${date(s.lastMessageAt)}` : ""}`;
