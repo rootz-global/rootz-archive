@@ -10,7 +10,7 @@ import {
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-HCLFIZI6.mjs";
+} from "./chunks/chunk-QSUWPVIM.mjs";
 import {
   defaultVaultDir,
   health
@@ -176,8 +176,11 @@ ${body}`);
     if (hasErrors) sessions = await db.getSessionsWithErrors(n);
     else if (projectSlug) sessions = await db.getProjectSessions(projectSlug, n);
     else if (query && query !== "*") {
-      const q = query.toLowerCase();
-      sessions = (await db.getAllSessions(1e3)).filter((s) => [s.summary || "", s.topics.join(" "), s.projectSlug || "", s.filesWritten.join(" "), s.filesRead.join(" ")].join(" ").toLowerCase().includes(q)).slice(0, n);
+      const words = String(query).toLowerCase().split(/\s+/).filter((w) => w.length > 1);
+      sessions = (await db.getAllSessions(1e3)).filter((s) => {
+        const hay = [s.summary || "", s.topics.join(" "), s.projectSlug || "", s.filesWritten.join(" "), s.filesRead.join(" "), s.title || ""].join(" ").toLowerCase();
+        return words.every((w) => hay.includes(w));
+      }).slice(0, n);
     } else sessions = await db.getAllSessions(n);
     sessionNumberMap.clear();
     if (sessions.length === 0) {
@@ -209,7 +212,13 @@ ${body}`);
     if (!sessionId) return text("Error: provide sessionId or sessionNumber (from list_past_sessions output).", true);
     const s = await db.getSessionMetadata(sessionId);
     if (!s) return text(`Session "${sessionId}" not found in the local archive.`, true);
-    const msgs = (await db.searchMessages("", { sessionId, limit: 5e3 })).sort((a, b) => a.turnIndex - b.turnIndex);
+    const seenMsg = /* @__PURE__ */ new Set();
+    const msgs = (await db.searchMessages("", { sessionId, limit: 5e3 })).sort((a, b) => a.turnIndex - b.turnIndex).filter((m) => {
+      const k = `${m.role}|${m.timestamp ?? ""}|${m.content}`;
+      if (seenMsg.has(k)) return false;
+      seenMsg.add(k);
+      return true;
+    });
     const list = (xs) => xs.length ? xs.slice(0, 10).map((f) => f.split(/[\\/]/).pop() || f).join("\n  - ") : "none";
     const git = s.gitCommitHash ? `Git: ${s.gitBranch || "detached"}@${s.gitCommitHash}${s.gitDirty ? " (uncommitted changes)" : ""}` : "Git: not tracked";
     const recent = msgs.length ? msgs.slice(0, 5).map((m) => `  [${m.role === "human" ? "\u{1F464}" : "\u{1F916}"}] ${m.content.substring(0, 100)}...`).join("\n") : "no messages";

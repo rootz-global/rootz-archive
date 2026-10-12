@@ -37,13 +37,13 @@ var SearchIndex = class {
     const t0 = Date.now();
     const current = this.archiveDb.prepare(`
       SELECT p.session_id AS s,
-             COUNT(*) || ':' || MAX(p.rowid) || ':' || COALESCE(SUM(LENGTH(p.content)), 0) || ':' || COALESCE(MAX(p.timestamp), 0)
+             'v2:' || COUNT(*) || ':' || MAX(p.rowid) || ':' || COALESCE(SUM(LENGTH(p.content)), 0) || ':' || COALESCE(MAX(p.timestamp), 0)
                || ':' || COALESCE((SELECT GROUP_CONCAT(c.content_hash, ',') FROM transcript_chunks c WHERE c.session_id = p.session_id), '') AS f
       FROM parsed_messages p GROUP BY p.session_id
     `).all();
     const known = new Map(this.db.prepare("SELECT session_id, fingerprint FROM synced_sessions").all().map((x) => [x.session_id, x.fingerprint]));
     const projectOf = this.archiveDb.prepare("SELECT project_slug FROM session_metadata WHERE session_id = ?");
-    const msgs = this.archiveDb.prepare("SELECT content, role, timestamp FROM parsed_messages WHERE session_id = ?");
+    const msgs = this.archiveDb.prepare("SELECT content, role, MIN(timestamp) AS timestamp FROM parsed_messages WHERE session_id = ? GROUP BY role, content, timestamp");
     const del = this.db.prepare("DELETE FROM msg_fts WHERE session_id = ? AND kind = 'message'");
     const ins = this.db.prepare("INSERT INTO msg_fts (content, session_id, project, role, ts, kind, model) VALUES (?, ?, ?, ?, ?, ?, ?)");
     const mark = this.db.prepare("INSERT OR REPLACE INTO synced_sessions (session_id, fingerprint) VALUES (?, ?)");
@@ -87,20 +87,31 @@ var SearchIndex = class {
       where.push("kind = ?");
       params.push(opts.kind);
     }
-    params.push(opts.limit ?? 10);
+    const limit = opts.limit ?? 10;
+    params.push(limit * 5);
     const rows = this.db.prepare(`
       SELECT session_id, project, role, ts, kind, model,
              snippet(msg_fts, 0, '\xAB', '\xBB', ' \u2026 ', 24) AS snip, bm25(msg_fts) AS score
       FROM msg_fts WHERE ${where.join(" AND ")}
       ORDER BY score LIMIT ?
     `).all(...params);
-    return rows.map((r) => ({
+    const now = Date.now();
+    const seen = /* @__PURE__ */ new Set();
+    return rows.map((r) => {
+      const ageDays = r.ts ? Math.max(0, (now - r.ts) / 864e5) : 365;
+      return { r, rank: -r.score * (1 + 0.5 / (1 + ageDays / 30)) };
+    }).sort((a, b) => b.rank - a.rank).filter(({ r }) => {
+      const k = `${r.session_id}|${r.snip}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    }).slice(0, limit).map(({ r, rank }) => ({
       sessionId: r.session_id,
       projectSlug: r.project,
       role: r.role,
       timestamp: r.ts,
       snippet: r.snip,
-      score: -r.score,
+      score: rank,
       kind: r.kind,
       ...r.model ? { model: r.model } : {}
     }));
@@ -410,7 +421,7 @@ function notAcceptedMessage(surface = process.env.ROOTZ_ARCHIVE_SURFACE) {
 var NOT_ACCEPTED_MESSAGE = notAcceptedMessage("plugin");
 
 // src/version.ts
-var SERVER_VERSION = "0.7.3";
+var SERVER_VERSION = "0.7.4";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);

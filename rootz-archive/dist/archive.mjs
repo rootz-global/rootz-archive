@@ -16,7 +16,7 @@ import {
   projectSlug,
   readSettings,
   writeSettings
-} from "./chunks/chunk-HCLFIZI6.mjs";
+} from "./chunks/chunk-QSUWPVIM.mjs";
 import {
   claudeCodeSource,
   defaultVaultDir,
@@ -305,7 +305,7 @@ async function main() {
     } catch {
     }
   }
-  if (!acceptance() && (cmd === "capture" || cmd === "snapshot" || cmd === "session-start" || cmd === "health" || cmd === "dashboard" || cmd === "share")) {
+  if (!acceptance() && (cmd === "capture" || cmd === "snapshot" || cmd === "session-start" || cmd === "health" || cmd === "dashboard" || cmd === "share" || cmd === "capture-soon")) {
     if (cmd === "session-start") out(JSON.stringify({ systemMessage: `\u{1F7E0} ${notAcceptedMessage()}` }));
     else if (cmd === "health") {
       out(`[NOT STARTED] ${notAcceptedMessage()}`);
@@ -314,6 +314,16 @@ async function main() {
     return;
   }
   switch (cmd) {
+    case "capture-soon": {
+      if (readSettings().paused) return;
+      try {
+        const hb = JSON.parse(fs3.readFileSync(path3.join(vault, "heartbeat.json"), "utf-8"));
+        if (Date.now() - Date.parse(hb.at) < 12e4) return;
+      } catch {
+      }
+      backgroundCapture();
+      return;
+    }
     case "capture": {
       const r = await capture();
       if (!isHook) {
