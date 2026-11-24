@@ -40,6 +40,25 @@ The version you accepted, with the time and the computer name.
 `{"paused": false, "excludeProjects": ["-Users-you-code-private-repo"]}`. Change these with `/rootz-archive:pause`,
 `/rootz-archive:resume`, `/rootz-archive:exclude-project` and `/rootz-archive:include-project`.
 
+## 5. Capture receipts: `~/.rootz-archive/receipts/archive-device-<kid>/` (0.8+)
+One capture log per device key, in the shared Rootz Receipts format (capture receipts, spec:
+https://receipts.rootz.global/spec/capture-receipt). All files are JSON lines, owner-only.
+- `capture-log.jsonl`: one leaf per captured version: its SHA-256 and size (and the version it continues, for an
+  appended transcript), the capture kind, the device-clock time, and **salted commitments** to its path, host and
+  modification time.
+- `openings.jsonl`: the salts for those commitments. They never leave this computer unless you choose to reveal one.
+- `appended.jsonl`: which vault version (SHA-256 and path) is which leaf.
+- `checkpoints.jsonl`: every checkpoint this device signed (a signed Merkle tree head over the log), oldest first. A
+  capture run that adds leaves signs one. A share uses the earliest checkpoint that covers its version.
+Times are this computer's clock, never an anchored time. Deleting this folder deletes the receipts, not the copies;
+a later capture starts a new log.
+
+## 6. A share: `~/.rootz-archive/shares/<date>-<id>/<id>.share.html`
+One HTML file with no network access (its Content-Security-Policy is `default-src 'none'`). It holds a readable copy
+(escaped text, not covered by the receipt), the exact conversation file as base64 in
+`<script type="application/octet-stream" id="rootz-covered">`, and the receipt as JSON in
+`<script type="application/json" id="rootz-receipt">`. Its two buttons save those two files for the verifier.
+
 ## Deleting your archive
 On Windows, `~` below is `%USERPROFILE%` for `.rootz-archive`, and `.rootz-desktop` is in `%APPDATA%`.
 1. `claude plugin uninstall rootz-archive` (and `claude plugin marketplace remove rootz`). Do this first, or the next

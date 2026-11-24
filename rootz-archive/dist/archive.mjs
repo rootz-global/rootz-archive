@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);
 import {
+  deviceKey,
+  receiptCoverage,
+  recordCaptures,
   shareSession
-} from "./chunks/chunk-D3BRPLQD.mjs";
+} from "./chunks/chunk-PZOBTOIA.mjs";
 import {
   LICENCE_VERSION,
   LocalArchive,
@@ -16,18 +19,19 @@ import {
   projectSlug,
   readSettings,
   writeSettings
-} from "./chunks/chunk-XC22NWWB.mjs";
+} from "./chunks/chunk-LLABXMD3.mjs";
 import {
   claudeCodeSource,
   defaultVaultDir,
   health,
+  keptAfterDeletion,
   readManifest,
   snapshot,
   tightenPermissions,
   verify,
   writeHeartbeat,
   writeVerifyMark
-} from "./chunks/chunk-ONYO6JOV.mjs";
+} from "./chunks/chunk-3UZSOSYW.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import "./chunks/chunk-4TWFJUN4.mjs";
 
@@ -110,12 +114,23 @@ function renderDashboard(d) {
       `${num(p.fileVersions)} saved versions of files Claude edited`,
       `${bytes(p.bytesKept)} kept as exact copies (${bytes(p.bytesOnDisk)} on disk, compressed)`,
       `Searchable now: ${num(p.searchableConversations)} conversations, ${num(p.searchableMessages)} messages`,
-      p.lastCapture ? `Last capture: ${esc(ago(p.lastCapture))}` : "Not captured yet"
+      p.lastCapture ? `Last capture: ${esc(ago(p.lastCapture))}` : "Not captured yet",
+      ...d.keptAfterDeletion ? [`<b>${num(d.keptAfterDeletion)} conversations are no longer in Claude Code's own folder</b> (it removes old ones after 30 days unless you change <code>cleanupPeriodDays</code>). Archive kept them.`] : []
     ]),
     tile("Integrity", integState, integ ? `${num(integ.ok)} <span>of ${num(integ.records)} verified</span>` : "Not checked yet", integ ? [
       integ.failures > 0 ? `<b>${num(integ.failures)} saved versions do not match their fingerprint.</b> Run <code>archive.mjs verify</code>.` : "Every saved version re-derives to its SHA-256 fingerprint.",
       `Last check: ${esc(ago(integ.at))}`
     ] : ["The daily check runs after the first capture."]),
+    ...d.receipts ? [tile(
+      "Receipts",
+      d.receipts.withReceipt >= d.receipts.versions && d.receipts.versions ? "green" : "amber",
+      `${num(d.receipts.withReceipt)} <span>of ${num(d.receipts.versions)} with a receipt</span>`,
+      [
+        "Each captured version is in this computer's signed capture log, so a share can prove its exact bytes.",
+        d.receipts.lastSigned ? `Last signed: ${esc(ago(d.receipts.lastSigned))} (this computer's clock)` : "The first receipts are signed at the next capture.",
+        "Share one with <code>/rootz-archive:share</code>; anyone can check it at receipts.rootz.global/verify."
+      ]
+    )] : [],
     tile("Time span", d.timeSpan.oldest ? "green" : "amber", d.timeSpan.oldest ? `${num(Math.max(1, Math.round(((d.timeSpan.newest ?? d.timeSpan.oldest) - d.timeSpan.oldest) / 864e5)))} <span>days of your work</span>` : "Nothing searchable yet", d.timeSpan.oldest ? [
       `From ${day(d.timeSpan.oldest)} to ${day(d.timeSpan.newest ?? d.timeSpan.oldest)} (oldest to newest searchable conversation)`,
       `${num(d.timeSpan.projects)} projects`
@@ -246,9 +261,23 @@ async function capture() {
       }
     })();
     if (!vm || Date.now() - Date.parse(vm.at) > 24 * 36e5) writeVerifyMark(vault, verify(vault));
-    return { captured: r.captured, indexed: idx.filesIndexed, messages: idx.totalMessagesIndexed, ranked: s.messagesIndexed };
+    let receipts = { appended: 0 };
+    try {
+      receipts = await recordCaptures({ vault, key: deviceKey });
+    } catch (e) {
+      receipts = { appended: 0, error: e.message };
+    }
+    return { captured: r.captured, indexed: idx.filesIndexed, messages: idx.totalMessagesIndexed, ranked: s.messagesIndexed, receipts };
   } finally {
     archive.close();
+  }
+}
+function keptLine() {
+  try {
+    const n = keptAfterDeletion(vault);
+    return n ? ` ${n.toLocaleString("en-US")} of them ${n === 1 ? "is" : "are"} gone from Claude Code's own folder (it deletes old ones after 30 days by default); Archive kept ${n === 1 ? "it" : "them"}.` : "";
+  } catch {
+    return "";
   }
 }
 function backgroundCapture() {
@@ -348,12 +377,19 @@ async function main() {
       const firstRun = h.headline.startsWith("Archive has not run yet");
       if (firstRun || h.state !== "green") backgroundCapture();
       const icon = { green: "\u{1F7E2}", amber: "\u{1F7E0}", red: "\u{1F534}" }[h.state];
-      const line = firstRun ? '\u{1F7E2} Rootz Archive is setting up: keeping an exact copy of your Claude Code conversations on this computer. Ask Claude "is Rootz Archive working?" anytime.' : `${icon} Rootz Archive (this computer): ${h.headline}${h.state === "green" ? ` \xB7 ${h.details[0] ?? ""}` : " \u2014 capture restarted."}`;
+      const line = firstRun ? '\u{1F7E2} Rootz Archive is setting up: keeping an exact copy of your Claude Code conversations on this computer. Ask Claude "is Rootz Archive working?" anytime.' : `${icon} Rootz Archive (this computer): ${h.headline}${h.state === "green" ? ` \xB7 ${h.details[0] ?? ""}${keptLine()}` : " \u2014 capture restarted."}`;
       out(JSON.stringify({ systemMessage: line }));
       return;
     }
     case "health": {
       const h = health(vault);
+      try {
+        const c = receiptCoverage(vault);
+        if (c.versions) h.details.push(`${c.withReceipt.toLocaleString("en-US")} of ${c.versions.toLocaleString("en-US")} captured versions have a capture receipt signed by this computer${c.lastSigned ? ` (last signed ${c.lastSigned}, this computer's clock)` : ""}.`);
+        const k = keptAfterDeletion(vault);
+        if (k) h.details.push(`${k.toLocaleString("en-US")} conversations are no longer in Claude Code's own folder; Archive kept them.`);
+      } catch {
+      }
       out(`[${h.state.toUpperCase()}] ${h.headline}
 ` + h.details.map((d) => `  ${d}`).join("\n"));
       process.exitCode = h.state === "green" ? 0 : h.state === "amber" ? 3 : 1;
@@ -419,7 +455,21 @@ async function main() {
         integrity: vm ? { ok: vm.ok, records: vm.records, failures: vm.failures, at: vm.at } : null,
         timeSpan: span,
         recall: recallCounts(home),
-        summaries
+        summaries,
+        keptAfterDeletion: (() => {
+          try {
+            return keptAfterDeletion(vault);
+          } catch {
+            return 0;
+          }
+        })(),
+        receipts: (() => {
+          try {
+            return receiptCoverage(vault, home);
+          } catch {
+            return void 0;
+          }
+        })()
       }), home);
       const openIt = !process.argv.includes("--no-open");
       if (openIt) {
@@ -443,13 +493,13 @@ async function main() {
           projectSlug: process.argv.includes("--here") ? projectSlug(process.cwd()) : void 0,
           transcript: async (id) => archive.getTranscript(id)
         });
-        out(`Rootz Archive made a share with a capture receipt (conversation ${r.sessionId}, ${r.bytes.toLocaleString("en-US")} bytes), on this computer only:
-  ${r.dir}
-Send the whole folder. The recipient checks it at https://receipts.rootz.global/verify (in their browser; nothing is uploaded).
+        out(`Rootz Archive made a share with a capture receipt (conversation ${r.sessionId}, ${r.bytes.toLocaleString("en-US")} bytes), on this computer only.
+SEND THIS ONE FILE: ${path3.join(r.dir, r.shareFile)}
+It holds the readable conversation, the exact conversation file and its receipt (${r.checkpointWhen === "capture" ? "signed by this computer when the conversation was captured" : "signed by this computer now"}). The recipient opens it and checks it at https://receipts.rootz.global/verify (in their browser; nothing is uploaded). The same files, unpacked, are in that folder.
 BEFORE YOU SEND IT: the file is the WHOLE transcript, including context you never saw in the chat:
 ` + r.contains.map((c) => `  - ${c}`).join("\n") + `
   The list, with sizes and first lines, is at the top of conversation.md. Nothing can be removed without breaking the receipt; if any of it should stay private, do not send this share.
-` + (r.authority === "none" ? `"Authorized by" will show as unavailable: this device (${r.key.binding === "secure-enclave" ? "Secure Enclave key" : "key stored on this computer"}) is not named on chain by its owner.` : "Authorized by: this device is named on chain by its owner."));
+` + (r.authority === "none" ? `"Authorized by" will show as unavailable: this device (${r.key.binding === "secure-enclave" ? "Secure Enclave key" : "key stored on this computer"}) is not named on chain by its owner. Companies name their people's devices with Rootz Receipts, so receipts say which organization stands behind them: https://receipts.rootz.global/pilot` : "Authorized by: this device is named on chain by its owner."));
       } finally {
         archive.close();
       }

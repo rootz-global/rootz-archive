@@ -10,12 +10,12 @@ import {
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-XC22NWWB.mjs";
+} from "./chunks/chunk-LLABXMD3.mjs";
 import {
   defaultVaultDir,
   health,
   readManifest
-} from "./chunks/chunk-ONYO6JOV.mjs";
+} from "./chunks/chunk-3UZSOSYW.mjs";
 import "./chunks/chunk-E6VJ2V3Q.mjs";
 import {
   McpServer,
@@ -380,21 +380,20 @@ ${body}`);
 ${h.details.map((d) => `- ${d}`).join("\n")}`, h.state === "red");
   });
   reg("share_session", {
-    description: TAG + "Make a share of one conversation with a capture receipt, at the user's request: the exact conversation file, a receipt anyone can check at receipts.rootz.global/verify, and a readable copy, in a folder on this computer. Nothing is sent anywhere; tell the user the folder path and that the share contains the whole conversation, so they should read it before sending.",
+    description: TAG + "Make a share of one conversation with a capture receipt, at the user's request: the exact conversation file, a receipt anyone can check at receipts.rootz.global/verify, and a readable copy, as ONE .share.html file (plus the same files unpacked in its folder) on this computer. Nothing is sent anywhere; tell the user the file to send and that it contains the whole conversation, so they should read it before sending.",
     inputSchema: { ...sessionRef }
   }, async (a) => {
     const id = resolveSessionId(a);
     if (!id) return text("Which conversation? Give a sessionId, or a sessionNumber from list_past_sessions.", true);
-    const { shareSession } = await import("./chunks/share-GXSCGBHR.mjs");
+    const { shareSession } = await import("./chunks/share-RR7D3N63.mjs");
     try {
       const r = await shareSession({ session: id, transcript: async (sid) => archive.getTranscript(sid) });
-      return text(`Share ready, on this computer only: \`${r.dir}\`
-Files: ${r.files.join(", ")} (${r.bytes.toLocaleString("en-US")} bytes of conversation).
-The recipient checks it at https://receipts.rootz.global/verify: choose receipt.json, then ${r.sessionId}.jsonl as the file it covers. Nothing is uploaded.
+      return text(`Share ready, on this computer only. The ONE file to send: \`${r.dir}/${r.shareFile}\` (${r.bytes.toLocaleString("en-US")} bytes of conversation).
+It holds the readable conversation, the exact file and its receipt (${r.checkpointWhen === "capture" ? "signed when the conversation was captured" : "signed now"}). The recipient opens it, saves the two files with its buttons, and checks them at https://receipts.rootz.global/verify. Nothing is uploaded. The same files, unpacked, are in \`${r.dir}\`.
 BEFORE SENDING, show the user this list: the file is the WHOLE transcript, including context not shown in the chat:
 ` + r.contains.map((c) => `- ${c}`).join("\n") + `
 The full list is at the top of conversation.md. Nothing can be removed without breaking the receipt; if any of it should stay private, the user should not send this share.
-` + (r.authority === "none" ? '"Authorized by" will show as unavailable: this device is not named on chain by its owner.' : "Authorized by: this device is named on chain by its owner."));
+` + (r.authority === "none" ? `"Authorized by" will show as unavailable: this device is not named on chain by its owner. Companies name their people's devices with Rootz Receipts, so receipts say which organization stands behind them: https://receipts.rootz.global/pilot` : "Authorized by: this device is named on chain by its owner."));
     } catch (e) {
       return text(`Could not make the share: ${e.message}`, true);
     }

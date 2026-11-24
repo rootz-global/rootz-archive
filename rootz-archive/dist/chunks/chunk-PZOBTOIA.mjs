@@ -4,7 +4,7 @@ import {
   defaultVaultDir,
   readManifest,
   reconstruct
-} from "./chunk-ONYO6JOV.mjs";
+} from "./chunk-3UZSOSYW.mjs";
 import {
   __commonJS,
   __require,
@@ -100,14 +100,14 @@ var require_sign_mcp = __commonJS({
         return true;
       }
       const { pathToFileURL } = __require("url");
-      const fs5 = __require("fs");
+      const fs6 = __require("fs");
       const candidates = [
         opts.distPath,
         process.env.ROOTZ_PQ_CRYPTO_DIST
       ].filter(Boolean);
       for (const cand of candidates) {
         try {
-          if (!fs5.existsSync(cand)) continue;
+          if (!fs6.existsSync(cand)) continue;
           const m = await import(pathToFileURL(cand).href);
           if (typeof m.pqSign === "function" && typeof m.pqVerify === "function" && typeof m.signKeygen === "function") {
             _pq = { sign: m.pqSign, verify: m.pqVerify, keygen: m.signKeygen };
@@ -401,19 +401,19 @@ var require_sign_mcp = __commonJS({
       inclusionProof(seq, from = 0, to = this.entries.length) {
         const leaves = this.entries.slice(from, to).map((e) => e.leaf);
         let idx = seq - from;
-        const path6 = [];
+        const path7 = [];
         let level = leaves.slice();
         while (level.length > 1) {
           const next = [];
           for (let i = 0; i < level.length; i += 2) {
             const l = level[i], r = level[i + 1] || level[i];
-            if (i === idx || i + 1 === idx) path6.push({ sib: b64u(i === idx ? r : l), right: i === idx });
+            if (i === idx || i + 1 === idx) path7.push({ sib: b64u(i === idx ? r : l), right: i === idx });
             next.push(sha2562(Buffer.concat([l, r])));
           }
           idx = Math.floor(idx / 2);
           level = next;
         }
-        return path6;
+        return path7;
       }
       /**
        * Anchor a window on-chain: anchorFn(rootB64u, meta) should write one Note and return a tx ref.
@@ -466,9 +466,9 @@ var require_sign_mcp = __commonJS({
 
 // src/share.ts
 import { createHash as createHash4 } from "crypto";
-import * as fs4 from "fs";
-import * as os2 from "os";
-import * as path5 from "path";
+import * as fs5 from "fs";
+import * as os3 from "os";
+import * as path6 from "path";
 
 // vendor/ask-orders/packages/envelope/src/index.ts
 import { createRequire as createRequire2 } from "node:module";
@@ -678,17 +678,17 @@ function verifyConsistency(m, n, rootM, rootN, proof) {
   if (!Number.isSafeInteger(m) || !Number.isSafeInteger(n) || m < 1 || m > n) return false;
   if (m === n) return proof.length === 0 && equal(rootM, rootN);
   if (proof.length === 0) return false;
-  const path6 = isPowerOfTwo(m) ? [rootM, ...proof] : [...proof];
+  const path7 = isPowerOfTwo(m) ? [rootM, ...proof] : [...proof];
   let fn = m - 1;
   let sn = n - 1;
   while ((fn & 1) === 1) {
     fn = Math.floor(fn / 2);
     sn = Math.floor(sn / 2);
   }
-  let fr = path6[0];
-  let sr = path6[0];
-  for (let i = 1; i < path6.length; i++) {
-    const c = path6[i];
+  let fr = path7[0];
+  let sr = path7[0];
+  for (let i = 1; i < path7.length; i++) {
+    const c = path7[i];
     if (sn === 0) return false;
     if ((fn & 1) === 1 || fn === sn) {
       fr = nodeHash(c, fr);
@@ -765,9 +765,9 @@ function memoryStore(logId) {
     }
   };
 }
-function fileStore(path6, logId) {
-  if (!existsSync(path6)) writeFileSync(path6, "", { flag: "wx" });
-  const data = readFileSync(path6);
+function fileStore(path7, logId) {
+  if (!existsSync(path7)) writeFileSync(path7, "", { flag: "wx" });
+  const data = readFileSync(path7);
   const offs = [], lens = [];
   let start = 0;
   for (let i = 0; i < data.length; i++) if (data[i] === 10) {
@@ -788,7 +788,7 @@ function fileStore(path6, logId) {
     async append(bytes) {
       const line = Buffer.from(bytes);
       if (line.includes(10)) throw new Error("fileStore: a leaf must not contain a newline");
-      appendFileSync(path6, Buffer.concat([line, Buffer.from("\n")]), { flag: "a" });
+      appendFileSync(path7, Buffer.concat([line, Buffer.from("\n")]), { flag: "a" });
       offs.push(end);
       lens.push(line.length);
       end += line.length + 1;
@@ -797,7 +797,7 @@ function fileStore(path6, logId) {
     async read(i) {
       const off = offs[i], len = lens[i];
       if (off === void 0 || len === void 0) throw new RangeError(`no leaf ${i}`);
-      fd ??= openSync(path6, "r");
+      fd ??= openSync(path7, "r");
       const buf = Buffer.alloc(len);
       readSync(fd, buf, 0, len, off);
       return buf;
@@ -983,18 +983,245 @@ async function captureReceipt(log, input) {
   return issueCaptureReceipt(log.session, { index: input.index, checkpoint: input.checkpoint, authority: input.authority, keys: input.keys, ...openings ? { openings } : {} });
 }
 
+// src/receipt-log.ts
+import * as fs2 from "fs";
+import * as os from "os";
+import * as path3 from "path";
+
+// src/winacl.ts
+import { execFileSync } from "child_process";
+var sid;
+function currentSid() {
+  if (sid !== void 0) return sid;
+  try {
+    const out = execFileSync("whoami", ["/user", "/fo", "csv", "/nh"], { encoding: "utf-8", windowsHide: true, timeout: 1e4 });
+    sid = (out.trim().split(",").pop() || "").replace(/"/g, "").trim() || null;
+  } catch {
+    sid = null;
+  }
+  return sid;
+}
+function ownerOnlyWindows(target, dir = false) {
+  if (process.platform !== "win32") return false;
+  const s = currentSid();
+  if (!s || !/^S-1-[0-9-]+$/.test(s)) return false;
+  try {
+    execFileSync("icacls", [target, "/inheritance:r", "/grant:r", `*${s}:${dir ? "(OI)(CI)F" : "F"}`], { stdio: "ignore", windowsHide: true, timeout: 15e3 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// src/receipt-log.ts
+var archiveHome = () => process.env.ROOTZ_ARCHIVE_HOME || path3.join(os.homedir(), ".rootz-archive");
+var logIdFor = (key) => `archive-device-${key.kid.slice(0, 24)}`;
+var recKey = (r) => `${r.path ?? "*"}\0${r.sha256}`;
+function readJsonl(file) {
+  if (!fs2.existsSync(file)) return [];
+  const out = [];
+  for (const line of fs2.readFileSync(file, "utf-8").split("\n")) {
+    if (!line) continue;
+    try {
+      out.push(JSON.parse(line));
+    } catch {
+    }
+  }
+  return out;
+}
+function lock(dir) {
+  const p = path3.join(dir, ".lock");
+  let fd;
+  try {
+    fd = fs2.openSync(p, "wx", 384);
+  } catch {
+    let age = 0;
+    try {
+      age = Date.now() - fs2.statSync(p).mtimeMs;
+    } catch {
+    }
+    if (age < 10 * 6e4 && fs2.existsSync(p)) throw new Error("the receipt log is busy (another capture or share is running)");
+    fs2.rmSync(p, { force: true });
+    fd = fs2.openSync(p, "wx", 384);
+  }
+  return () => {
+    try {
+      fs2.closeSync(fd);
+    } catch {
+    }
+    fs2.rmSync(p, { force: true });
+  };
+}
+async function openReceiptLog(key, home = archiveHome()) {
+  const logId = logIdFor(key);
+  const dir = path3.join(home, "receipts", logId);
+  fs2.mkdirSync(dir, { recursive: true, mode: 448 });
+  ownerOnlyWindows(dir, true);
+  const unlock = lock(dir);
+  try {
+    for (const f of ["capture-log.jsonl", "openings.jsonl", "appended.jsonl", "checkpoints.jsonl"]) {
+      const fp = path3.join(dir, f);
+      if (!fs2.existsSync(fp)) fs2.writeFileSync(fp, "", { mode: 384 });
+      if (process.platform !== "win32") fs2.chmodSync(fp, 384);
+    }
+    const log = await openDeviceLog({ dir, logId, signer: key.signer(), binding: key.binding });
+    const appendedFile = path3.join(dir, "appended.jsonl");
+    const cpFile = path3.join(dir, "checkpoints.jsonl");
+    const map = /* @__PURE__ */ new Map();
+    for (const m of readJsonl(appendedFile)) if (!map.has(recKey(m))) map.set(recKey(m), m.index);
+    const keys = { keys: [key.publishedJwk()] };
+    const indexOf = (rec) => map.get(recKey(rec)) ?? map.get(recKey({ sha256: rec.sha256 }));
+    return {
+      log,
+      dir,
+      key,
+      keys,
+      indexOf,
+      async appendMissing(records) {
+        let n = 0;
+        for (const rec of records) {
+          if (indexOf(rec) !== void 0) continue;
+          const [index] = await log.append([rec]);
+          fs2.appendFileSync(appendedFile, JSON.stringify({ sha256: rec.sha256, path: rec.path, index }) + "\n", { mode: 384 });
+          map.set(recKey(rec), index);
+          n++;
+        }
+        return n;
+      },
+      async sealAndKeep(at) {
+        const cp = await log.seal(at);
+        fs2.appendFileSync(cpFile, JSON.stringify(cp) + "\n", { mode: 384 });
+        return cp;
+      },
+      async earliestCovering(index) {
+        for (const cp of readJsonl(cpFile)) {
+          if (!cp?.body || cp.body.tree_size <= index || cp.body.signer?.kid !== key.kid) continue;
+          try {
+            await log.session.prove(index, cp);
+            const sig = verifyProof(cp.body, cp.proofs[0], { at: cp.body.at, publishedKeys: keys, pinnedKid: key.kid });
+            if (sig.valid) return cp;
+          } catch {
+          }
+        }
+        return null;
+      },
+      close: unlock
+    };
+  } catch (e) {
+    unlock();
+    throw e;
+  }
+}
+async function recordCaptures(opts) {
+  const home = opts.home ?? archiveHome();
+  const records = fs2.existsSync(path3.join(opts.vault, "manifest.jsonl")) ? readManifest(opts.vault) : [];
+  if (!records.length) return { appended: 0, treeSize: 0, checkpointAt: null };
+  const ol = await openReceiptLog(opts.key(), home);
+  try {
+    const appended = await ol.appendMissing(records);
+    let checkpointAt = null;
+    if (appended) checkpointAt = (await ol.sealAndKeep((opts.now ?? (() => (/* @__PURE__ */ new Date()).toISOString()))())).body.at;
+    const run = { appended, treeSize: ol.log.session.size(), checkpointAt };
+    fs2.writeFileSync(path3.join(home, "receipts", "last-run.json"), JSON.stringify({ at: (/* @__PURE__ */ new Date()).toISOString(), ...run }) + "\n", { mode: 384 });
+    return run;
+  } finally {
+    ol.close();
+  }
+}
+function receiptCoverage(vault, home = archiveHome()) {
+  const versions = fs2.existsSync(path3.join(vault, "manifest.jsonl")) ? readManifest(vault).length : 0;
+  let withReceipt = 0, lastSigned = null;
+  try {
+    for (const d of fs2.readdirSync(path3.join(home, "receipts"))) {
+      const cps = readJsonl(path3.join(home, "receipts", d, "checkpoints.jsonl"));
+      const last = cps.at(-1);
+      if (last && last.body.tree_size >= withReceipt) {
+        withReceipt = last.body.tree_size;
+        lastSigned = last.body.at;
+      }
+    }
+  } catch {
+  }
+  return { versions, withReceipt: Math.min(withReceipt, versions), lastSigned };
+}
+
+// src/share-html.ts
+var esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+var LS = new RegExp(String.fromCharCode(8232), "g");
+var PS = new RegExp(String.fromCharCode(8233), "g");
+var jsonInScript = (v) => JSON.stringify(v).replace(/</g, "\\u003c").replace(LS, "\\u2028").replace(PS, "\\u2029");
+var RECEIPTS_FOR_TEAMS = "https://receipts.rootz.global/pilot";
+var VERIFY_URL = "https://receipts.rootz.global/verify";
+var ARCHIVE_URL = "https://archive.rootz.global";
+function shareHtml(i) {
+  const roleLabel = { user: "Person", assistant: "AI", tool: "Tool results" };
+  const msgs = i.messages.length ? i.messages.map((m) => `<section class="msg ${esc(m.role)}"><h3>${esc(roleLabel[m.role] ?? m.role)}</h3><div class="body">${esc(m.content)}</div></section>`).join("\n") : '<p class="muted">No readable messages in this conversation. The exact file is still attached below.</p>';
+  const when = i.checkpointWhen === "capture" ? `signed by the sender's device at ${esc(i.signedAt)}, when it was captured` : `signed by the sender's device at ${esc(i.signedAt)}, when it was shared (it was captured before receipts were made at capture)`;
+  const authority = i.named ? "<p><b>Authorized by:</b> the owner has named this device on chain. The verifier shows who.</p>" : `<p><b>Authorized by</b> will show "unavailable": no owner has named this device. Companies name their people's devices with <a href="${RECEIPTS_FOR_TEAMS}">Rootz Receipts</a>, so a receipt says which organization stands behind it.</p>`;
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:">
+<meta name="generator" content="Rootz Archive">
+<title>Shared AI conversation ${esc(i.id.slice(0, 8))}, with a capture receipt</title>
+<style>
+:root{color-scheme:light dark;--bg:#fbfaf7;--fg:#1d1d1b;--muted:#6b6a65;--line:#e3e0d8;--card:#fff;--accent:#2f6b4f}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--fg:#ecebe6;--muted:#a3a19a;--line:#33322e;--card:#1f1f1c;--accent:#7cc4a0}}
+*{box-sizing:border-box;min-width:0}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:52rem;margin:0 auto;padding:2rem 1.25rem 4rem}h1{font-size:1.5rem;margin:0 0 .25rem}h2{font-size:1.1rem;margin:2rem 0 .5rem}
+.muted{color:var(--muted)}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin:1rem 0}
+.check ol{padding-left:1.25rem;margin:.5rem 0}button{font:inherit;padding:.45rem .8rem;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer;margin:.25rem .5rem .25rem 0}
+a{color:var(--accent)}.msg{border-top:1px solid var(--line);padding:.75rem 0}.msg h3{font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 .25rem}
+.msg.tool .body{color:var(--muted);font-size:.9rem}.body{white-space:pre-wrap;overflow-wrap:anywhere}footer{margin-top:3rem;border-top:1px solid var(--line);padding-top:1rem;font-size:.92rem}
+</style></head>
+<body><main>
+<h1>A shared AI conversation, with a capture receipt</h1>
+<p class="muted">Conversation ${esc(i.id)} \xB7 ${i.bytes.length.toLocaleString("en-US")} bytes \xB7 captured ${esc(i.capturedAt)} (sender's device clock)</p>
+
+<div class="card check">
+<h2 style="margin-top:0">Check that it hasn't been changed</h2>
+<p>This file carries the exact conversation file and its receipt, ${when}. To check them:</p>
+<ol>
+<li><button id="save-covered" type="button">Save the exact conversation file</button><button id="save-receipt" type="button">Save the receipt</button></li>
+<li>Open <a href="${VERIFY_URL}">${VERIFY_URL.replace("https://", "")}</a>, choose the receipt, then choose the conversation file as "the file it covers".</li>
+</ol>
+<p class="muted">The check runs in your browser; nothing is uploaded. Change one byte and it fails. It proves these bytes were captured by the sender's device and are in its signed log. It does not prove the content is true, and the times are the device's own clock.</p>
+${authority}
+</div>
+
+<h2>The conversation</h2>
+<p class="muted">A readable copy, for convenience. The receipt covers the exact file above, not this copy. Tool calls and their results are shown as one-line markers.</p>
+${msgs}
+
+<footer>
+<p><b>Shared with <a href="${ARCHIVE_URL}">Rootz Archive</a></b>: it keeps an exact copy of every Claude Code conversation on your own computer, searchable by your AI, with a receipt for each one. Free for individual users. No account, nothing sent to us.</p>
+</footer>
+</main>
+<script type="application/json" id="rootz-receipt">${jsonInScript(i.receipt)}</script>
+<script type="application/octet-stream" id="rootz-covered" data-name="${esc(i.id)}.jsonl" data-encoding="base64">${i.bytes.toString("base64")}</script>
+<script>
+(function(){
+  function save(name, data, type){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);}
+  document.getElementById('save-receipt').onclick=function(){save('receipt.json',document.getElementById('rootz-receipt').textContent,'application/json');};
+  document.getElementById('save-covered').onclick=function(){var el=document.getElementById('rootz-covered');var b=atob(el.textContent.trim());var u=new Uint8Array(b.length);for(var k=0;k<b.length;k++)u[k]=b.charCodeAt(k);save(el.getAttribute('data-name'),u,'application/octet-stream');};
+})();
+</script>
+</body></html>
+`;
+}
+
 // src/device-key.ts
 import { createPublicKey, generateKeyPairSync, sign as nodeSign, createPrivateKey } from "crypto";
-import * as fs3 from "fs";
-import * as os from "os";
-import * as path4 from "path";
+import * as fs4 from "fs";
+import * as os2 from "os";
+import * as path5 from "path";
 
 // src/device-signer.ts
-import { execFileSync } from "child_process";
+import { execFileSync as execFileSync2 } from "child_process";
 import { randomBytes as randomBytes3, createHash as createHash3 } from "crypto";
 import { createRequire as createRequire3 } from "module";
-import * as fs2 from "fs";
-import * as path3 from "path";
+import * as fs3 from "fs";
+import * as path4 from "path";
 import { fileURLToPath } from "url";
 var DEVICE_KEY_LABEL = "global.rootz.archive-free.device.v1";
 var DEVICE_ISS = "archive-free";
@@ -1014,12 +1241,12 @@ function jktP256(jwk) {
 }
 function defaultHelperPath() {
   if (process.env.ROOTZ_SE_HELPER) return process.env.ROOTZ_SE_HELPER;
-  const here = path3.dirname(fileURLToPath(import.meta.url));
-  for (const c of [path3.join(here, "..", "native", "rootz-se-helper"), path3.join(here, "rootz-se-helper")]) if (fs2.existsSync(c)) return c;
-  return path3.join(here, "..", "native", "rootz-se-helper");
+  const here = path4.dirname(fileURLToPath(import.meta.url));
+  for (const c of [path4.join(here, "..", "native", "rootz-se-helper"), path4.join(here, "rootz-se-helper")]) if (fs3.existsSync(c)) return c;
+  return path4.join(here, "..", "native", "rootz-se-helper");
 }
 function helper(helperPath, args) {
-  const out = execFileSync(helperPath, args, { timeout: 3e4, encoding: "utf-8" });
+  const out = execFileSync2(helperPath, args, { timeout: 3e4, encoding: "utf-8" });
   const r = JSON.parse(out.trim().split("\n").pop());
   if (!r.success) throw new Error(`secure enclave helper: ${r.error}`);
   return r;
@@ -1031,7 +1258,7 @@ var SecureEnclaveDeviceKey = class {
     if (FORBIDDEN_LABELS.includes(label)) throw new Error(`refusing to use ${label}: that is Desktop's wallet key (never unify)`);
   }
   static available(helperPath = defaultHelperPath()) {
-    if (process.platform !== "darwin" || !fs2.existsSync(helperPath)) return false;
+    if (process.platform !== "darwin" || !fs3.existsSync(helperPath)) return false;
     try {
       return helper(helperPath, ["isAvailable"]).available === true;
     } catch {
@@ -1068,49 +1295,24 @@ var SecureEnclaveDeviceKey = class {
   }
 };
 
-// src/winacl.ts
-import { execFileSync as execFileSync2 } from "child_process";
-var sid;
-function currentSid() {
-  if (sid !== void 0) return sid;
-  try {
-    const out = execFileSync2("whoami", ["/user", "/fo", "csv", "/nh"], { encoding: "utf-8", windowsHide: true, timeout: 1e4 });
-    sid = (out.trim().split(",").pop() || "").replace(/"/g, "").trim() || null;
-  } catch {
-    sid = null;
-  }
-  return sid;
-}
-function ownerOnlyWindows(target, dir = false) {
-  if (process.platform !== "win32") return false;
-  const s = currentSid();
-  if (!s || !/^S-1-[0-9-]+$/.test(s)) return false;
-  try {
-    execFileSync2("icacls", [target, "/inheritance:r", "/grant:r", `*${s}:${dir ? "(OI)(CI)F" : "F"}`], { stdio: "ignore", windowsHide: true, timeout: 15e3 });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 // src/device-key.ts
-var archiveHome = () => process.env.ROOTZ_ARCHIVE_HOME || path4.join(os.homedir(), ".rootz-archive");
+var archiveHome2 = () => process.env.ROOTZ_ARCHIVE_HOME || path5.join(os2.homedir(), ".rootz-archive");
 var FileDeviceKey = class {
   binding = "none";
   priv;
   kid;
-  constructor(file = path4.join(archiveHome(), "device-key.json")) {
-    if (!fs3.existsSync(file)) {
+  constructor(file = path5.join(archiveHome2(), "device-key.json")) {
+    if (!fs4.existsSync(file)) {
       const { privateKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
-      fs3.mkdirSync(path4.dirname(file), { recursive: true, mode: 448 });
+      fs4.mkdirSync(path5.dirname(file), { recursive: true, mode: 448 });
       const tmp = `${file}.tmp-${process.pid}`;
-      fs3.writeFileSync(tmp, JSON.stringify({ kind: "rootz-archive.device-key.v1", created: (/* @__PURE__ */ new Date()).toISOString(), jwk: privateKey.export({ format: "jwk" }) }), { mode: 384 });
+      fs4.writeFileSync(tmp, JSON.stringify({ kind: "rootz-archive.device-key.v1", created: (/* @__PURE__ */ new Date()).toISOString(), jwk: privateKey.export({ format: "jwk" }) }), { mode: 384 });
       ownerOnlyWindows(tmp);
-      fs3.renameSync(tmp, file);
+      fs4.renameSync(tmp, file);
     } else {
       ownerOnlyWindows(file);
     }
-    this.priv = createPrivateKey({ key: JSON.parse(fs3.readFileSync(file, "utf-8")).jwk, format: "jwk" });
+    this.priv = createPrivateKey({ key: JSON.parse(fs4.readFileSync(file, "utf-8")).jwk, format: "jwk" });
     this.kid = jktP256(this.publicJwk());
   }
   publicJwk() {
@@ -1256,8 +1458,8 @@ function inventoryMarkdown(inv, jsonlName) {
 }
 
 // src/share.ts
-var archiveHome2 = () => process.env.ROOTZ_ARCHIVE_HOME || path5.join(os2.homedir(), ".rootz-archive");
-var sid2 = (rec) => path5.basename(rec.path, ".jsonl");
+var archiveHome3 = () => process.env.ROOTZ_ARCHIVE_HOME || path6.join(os3.homedir(), ".rootz-archive");
+var sid2 = (rec) => path6.basename(rec.path, ".jsonl");
 function findSession(records, which, projectSlug) {
   const t = records.filter((r) => r.kind === "transcript");
   const pool = which === "latest" ? projectSlug ? t.filter((r) => r.path.startsWith(`projects/${projectSlug}/`)) : t : t.filter((r) => sid2(r) === which);
@@ -1265,7 +1467,7 @@ function findSession(records, which, projectSlug) {
 }
 function authorityFor(kid, home) {
   try {
-    const a = JSON.parse(fs4.readFileSync(path5.join(home, "authority.json"), "utf-8"));
+    const a = JSON.parse(fs5.readFileSync(path6.join(home, "authority.json"), "utf-8"));
     if (a && Array.isArray(a.hops) && a.hops.length && a.hops[a.hops.length - 1].to === kid && typeof a.root === "string") return { evidence: a, named: true };
   } catch {
   }
@@ -1310,6 +1512,7 @@ ${m.content}
 }
 var howTo = (id, named) => `This folder is a Claude Code conversation shared from Rootz Archive, with a capture receipt.
 
+  ${id}.share.html  THE FILE TO SEND: the conversation, the exact file and its receipt, all in one
   ${id}.jsonl       the exact conversation file, byte for byte, as captured on the sender's computer
   receipt.json      the capture receipt for that file
   conversation.md   a readable copy for convenience (the receipt does NOT cover it)
@@ -1318,16 +1521,18 @@ To check it:
   1. Open https://receipts.rootz.global/verify
   2. Paste or choose receipt.json
   3. Choose ${id}.jsonl as "the file it covers"
+(With only the .share.html file: open it and use its two "Save" buttons to get those two files.)
 The check runs in your browser; nothing is uploaded.
 
 What it shows: these exact bytes were captured by the sender's device and are in its signed capture log. Change one
-byte and the check fails. ${named ? "Authorized by: the device is named on chain by its owner." : 'Authorized by will say "unavailable": the sender has not named this device on chain.'}
+byte and the check fails. ${named ? "Authorized by: the device is named on chain by its owner." : `Authorized by will say "unavailable": no owner has named this device. Companies name their people's devices with
+Rootz Receipts, so a receipt says which organization stands behind it: https://receipts.rootz.global/pilot`}
 What it does not show: that the content is true. The capture time is the device's own clock.
 
 Rootz Archive keeps your own Claude Code conversations, on your own computer: https://archive.rootz.global
 `;
 async function shareSession(opts) {
-  const home = archiveHome2();
+  const home = archiveHome3();
   const vault = process.env.ROOTZ_VAULT_DIR || defaultVaultDir();
   const records = readManifest(vault);
   const rec = findSession(records, opts.session, opts.projectSlug);
@@ -1336,46 +1541,59 @@ async function shareSession(opts) {
   if (createHash4("sha256").update(bytes).digest("hex") !== rec.sha256) throw new Error("The saved copy does not match its fingerprint; not sharing it. Run verify.");
   const key = opts.key ?? deviceKey();
   const now = opts.now ?? (/* @__PURE__ */ new Date()).toISOString();
-  const logId = `archive-device-${key.kid.slice(0, 24)}`;
-  const logDir = path5.join(home, "receipts", logId);
-  const log = await openDeviceLog({ dir: logDir, logId, signer: key.signer(), binding: key.binding });
-  ownerOnlyWindows(logDir, true);
-  const appendedFile = path5.join(logDir, "appended.jsonl");
-  const seen = fs4.existsSync(appendedFile) ? fs4.readFileSync(appendedFile, "utf-8").split("\n").filter(Boolean).map((l) => JSON.parse(l)) : [];
-  let index = seen.find((s) => s.sha256 === rec.sha256)?.index;
-  if (index === void 0) {
-    [index] = await log.append([rec]);
-    fs4.appendFileSync(appendedFile, JSON.stringify({ sha256: rec.sha256, index }) + "\n", { mode: 384 });
+  const ol = await openReceiptLog(key, home);
+  let receipt, checkpointWhen;
+  try {
+    await ol.appendMissing([rec]);
+    const index = ol.indexOf(rec);
+    let checkpoint = await ol.earliestCovering(index);
+    checkpointWhen = checkpoint ? "capture" : "share";
+    if (!checkpoint) checkpoint = await ol.sealAndKeep(now);
+    const { evidence } = authorityFor(key.kid, home);
+    receipt = JSON.parse(JSON.stringify(await captureReceipt(ol.log, { index, checkpoint, authority: evidence, keys: ol.keys })));
+  } finally {
+    ol.close();
   }
-  const checkpoint = await log.seal(now);
-  const { evidence, named } = authorityFor(key.kid, home);
+  const { named } = authorityFor(key.kid, home);
   const keys = { keys: [key.publishedJwk()] };
-  const receipt = JSON.parse(JSON.stringify(await captureReceipt(log, { index, checkpoint, authority: evidence, keys })));
   if (!matchesCommitment(bytes, receipt.subject.event.body)) throw new Error("self-check failed: bytes do not match the receipt");
   const sig = verifyProof(receipt.checkpoint.body, receipt.checkpoint.proofs[0], { at: receipt.checkpoint.body.at, publishedKeys: keys, pinnedKid: key.kid });
   if (!sig.valid) throw new Error(`self-check failed: checkpoint signature (${sig.reasons.join(", ")})`);
   const id = sid2(rec);
-  const base = path5.join(home, "shares", `${now.slice(0, 10)}-${id.slice(0, 8)}`);
+  const base = path6.join(home, "shares", `${now.slice(0, 10)}-${id.slice(0, 8)}`);
   let dir = base;
-  for (let n = 2; fs4.existsSync(dir); n++) dir = `${base}-${n}`;
-  fs4.mkdirSync(dir, { recursive: true, mode: 448 });
+  for (let n = 2; fs5.existsSync(dir); n++) dir = `${base}-${n}`;
+  fs5.mkdirSync(dir, { recursive: true, mode: 448 });
   ownerOnlyWindows(dir, true);
   const write = (name, data) => {
-    fs4.writeFileSync(path5.join(dir, name), data, { mode: 384 });
+    fs5.writeFileSync(path6.join(dir, name), data, { mode: 384 });
     return name;
   };
-  const files = [write(`${id}.jsonl`, bytes), write("receipt.json", JSON.stringify(receipt, null, 1) + "\n")];
   const inv = inventory(bytes);
   const msgs = messagesFromJsonl(bytes);
+  const files = [write(`${id}.share.html`, shareHtml({
+    id,
+    bytes,
+    receipt,
+    messages: msgs,
+    capturedAt: rec.capturedAt,
+    signedAt: receipt.checkpoint.body.at,
+    checkpointWhen,
+    named
+  }))];
+  files.push(write(`${id}.jsonl`, bytes), write("receipt.json", JSON.stringify(receipt, null, 1) + "\n"));
   files.push(write("conversation.md", inventoryMarkdown(inv, `${id}.jsonl`) + (msgs.length ? readable(msgs, id) : `# Conversation ${id}
 
 (No readable messages: open ${id}.jsonl.)
 `)));
   files.push(write("HOW-TO-CHECK.txt", howTo(id, named)));
-  return { dir, sessionId: id, files, bytes: bytes.length, contains: summary(inv), possibleSecrets: inv.secrets.length, key: { kid: key.kid, binding: key.binding }, authority: named ? "named-on-chain" : "none" };
+  return { dir, sessionId: id, files, shareFile: files[0], checkpointWhen, bytes: bytes.length, contains: summary(inv), possibleSecrets: inv.secrets.length, key: { kid: key.kid, binding: key.binding }, authority: named ? "named-on-chain" : "none" };
 }
 
 export {
+  recordCaptures,
+  receiptCoverage,
+  deviceKey,
   findSession,
   messagesFromJsonl,
   shareSession

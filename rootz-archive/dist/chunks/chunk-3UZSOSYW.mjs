@@ -233,6 +233,13 @@ var readJson = (p) => {
   }
 };
 var ago = (ms) => ms < 9e4 ? "just now" : ms < 90 * 6e4 ? `${Math.round(ms / 6e4)} min ago` : ms < 48 * 36e5 ? `${Math.round(ms / 36e5)} hours ago` : `${Math.round(ms / 864e5)} days ago`;
+function keptAfterDeletion(vault = defaultVaultDir(), sourceRoot = path.join(os.homedir(), ".claude")) {
+  if (!fs.existsSync(path.join(vault, "manifest.jsonl"))) return 0;
+  const paths = new Set(readManifest(vault).filter((r) => r.kind === "transcript" && r.source === "claude-code").map((r) => r.path));
+  let gone = 0;
+  for (const p of paths) if (!fs.existsSync(path.join(sourceRoot, ...p.split("/")))) gone++;
+  return gone;
+}
 function health(vault = defaultVaultDir(), now = Date.now(), staleAfterMs = 30 * 6e4) {
   const details = [];
   const hb = readJson(path.join(vault, "heartbeat.json"));
@@ -270,5 +277,6 @@ export {
   verify,
   writeHeartbeat,
   writeVerifyMark,
+  keptAfterDeletion,
   health
 };

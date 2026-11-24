@@ -38,10 +38,14 @@ pasted into a conversation**. Rootz Archive copies them exactly as they are.
 - `~/.rootz-archive/dashboard.html`: your dashboard page, written only when you run `/rootz-archive:dashboard`. It is
   a plain file with no scripts and no links to the internet.
 - `~/.rootz-archive/shares/`: shares you ask for (`/rootz-archive:share`, or asking Claude to share a conversation). A
-  share is a folder with **the whole conversation** and a capture receipt. **Nothing is sent:** you decide whether and to
-  whom to send it. Read it first: it includes anything pasted into the conversation.
-- `~/.rootz-archive/device-key.json` and `receipts/`: the key this computer signs shares with, and its signed log of
-  what it has shared. The receipt carries the key's public half only.
+  share is one `.share.html` file (plus the same contents unpacked in its folder) with **the whole conversation** and a
+  capture receipt. **Nothing is sent:** you decide whether and to whom to send it. Read it first: it includes anything
+  pasted into the conversation.
+- `~/.rootz-archive/device-key.json` and `receipts/`: the key this computer signs capture receipts with, and its signed
+  log of what it has captured (from 0.8, every captured version, not only shared ones). The log holds fingerprints and
+  sizes, with paths, host and times only as salted commitments; it stays on this computer. A receipt carries the key's
+  public half only. It shows how many entries the log had when it was signed, and that two shares from this computer
+  came from the same log; it reveals nothing else about other entries (their fingerprints are hidden behind random salts).
 
 Folders are created owner-only (0700) and files owner-only (0600).
 

@@ -20,8 +20,9 @@ your AI search it. **Free for individual users**, under the [Rootz Archive Use L
   - `/rootz-archive:accept` (the only way to start capture; it runs the plugin's own accept step);
   - `/rootz-archive:archive` (status);
   - `/rootz-archive:dashboard` (writes a local page, `~/.rootz-archive/dashboard.html`, and opens it in your browser);
-  - `/rootz-archive:share` (makes a share of this project's latest conversation with a capture receipt: a folder on
-    your computer that you send yourself; or ask Claude to share any other conversation, through the `share_session` tool);
+  - `/rootz-archive:share` (makes a share of this project's latest conversation with a capture receipt: one
+    `.share.html` file on your computer that you send yourself; or ask Claude to share any other conversation, through
+    the `share_session` tool);
   - `/rootz-archive:pause` and `/rootz-archive:resume`;
   - `/rootz-archive:exclude-project` and `/rootz-archive:include-project` (for the current folder's project).
 - **Background capture:** at session start, if the archive isn't up to date, the plugin starts one capture of its own
@@ -43,12 +44,16 @@ tool, the result goes to your AI provider as part of your conversation, as with 
 - `~/.rootz-archive/recall.jsonl`: when your AI read from the archive (tool name and time only, never what it asked),
   for the dashboard's Recall count.
 - `~/.rootz-archive/dashboard.html`: the dashboard page, written only when you run `/rootz-archive:dashboard`.
-- `~/.rootz-archive/shares/<date>-<id>/`: a share, written only when you ask for one. It holds the exact conversation
-  file, `receipt.json`, a readable copy and `HOW-TO-CHECK.txt`. It is sent nowhere; you choose whom to send it to.
-- `~/.rootz-archive/device-key.json`: this computer's signing key for shares (P-256, 0600), made on first share (on a
-  Mac with the Rootz Secure Enclave helper, the key stays in the Secure Enclave instead). `receipts/`: its signed
-  capture log. `authority.json` (optional, yours): on-chain evidence naming this device, so a share shows
-  "Authorized by: verified".
+- `~/.rootz-archive/shares/<date>-<id>/`: a share, written only when you ask for one. `<id>.share.html` is the one
+  file to send: a readable copy plus the exact conversation file and its receipt inside it. The folder also holds the
+  same things unpacked (`<id>.jsonl`, `receipt.json`, `conversation.md`, `HOW-TO-CHECK.txt`). It is sent nowhere; you
+  choose whom to send it to.
+- `~/.rootz-archive/device-key.json`: this computer's signing key for capture receipts (P-256, 0600), made at the first
+  capture (on a Mac with the Rootz Secure Enclave helper, the key stays in the Secure Enclave instead).
+- `~/.rootz-archive/receipts/`: this computer's signed capture log (0.8+). Every captured version gets an entry, which
+  holds its SHA-256 and size plus salted commitments to its path, host and time; the salts, and which path is which
+  entry, stay in this folder. Each capture run that adds entries signs one checkpoint. About 1 KB per captured version.
+  `authority.json` (optional, yours): on-chain evidence naming this device, so a share shows "Authorized by: verified".
 
 Formats and deletion: [FORMAT.md](FORMAT.md). Privacy: [PRIVACY.md](PRIVACY.md). Open-source components: [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
 Not affiliated with Anthropic.
