@@ -10,7 +10,7 @@ import {
   nodeOk,
   notAcceptedMessage,
   readSettings
-} from "./chunks/chunk-LLABXMD3.mjs";
+} from "./chunks/chunk-SBAFHDF6.mjs";
 import {
   defaultVaultDir,
   health,

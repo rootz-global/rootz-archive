@@ -421,7 +421,7 @@ function notAcceptedMessage(surface = process.env.ROOTZ_ARCHIVE_SURFACE) {
 var NOT_ACCEPTED_MESSAGE = notAcceptedMessage("plugin");
 
 // src/version.ts
-var SERVER_VERSION = "0.8.0";
+var SERVER_VERSION = "0.8.1";
 var MIN_NODE = "22.13";
 function nodeOk(v = process.versions.node) {
   const [maj, min] = v.split(".").map(Number);

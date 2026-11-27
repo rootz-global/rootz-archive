@@ -1,7 +1,8 @@
 # Rootz Archive (Claude Code plugin)
 
-Keeps an exact copy of every Claude Code conversation, and every file Claude edits, on your own computer, and lets
-your AI search it. **Free for individual users**, under the [Rootz Archive Use Licence](LICENSE.md). Needs Node.js
+Lets Claude search everything you've done with it: every Claude Code conversation, and every file Claude edits, kept as
+exact copies on your own computer. Each copy carries a capture receipt signed by your computer, so a conversation you
+share can be checked byte for byte. **Free for individual users**, under the [Rootz Archive Use Licence](LICENSE.md). Needs Node.js
 22.13+.
 
 ## What this plugin runs, sends and stores
